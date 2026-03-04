@@ -28,6 +28,13 @@ export default function DashboardPage() {
       setLoading(true);
 
       const { data: userData } = await supabase.auth.getUser();
+      const name =
+  (userData.user?.user_metadata?.full_name as string | undefined) ||
+  (userData.user?.user_metadata?.name as string | undefined) ||
+  null;
+  <h1 className="text-3xl font-semibold tracking-tight">
+  {name ? `Welcome, ${name}` : "Welcome"}
+</h1>
       if (!mounted) return;
 
       setEmail(userData.user?.email ?? null);
