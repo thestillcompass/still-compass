@@ -54,14 +54,14 @@ export default function HomePage() {
 
                 <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
                   <Link
-                    href="/login"
-                    className="group inline-flex w-full items-center justify-center rounded-2xl bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-white/90 sm:w-auto"
-                  >
-                    Start check-in
-                    <span className="ml-2 inline-block transition group-hover:translate-x-0.5">
-                      →
-                    </span>
-                  </Link>
+  href="/login?next=/check-in"
+  className="group inline-flex w-full items-center justify-center rounded-2xl bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-white/90 sm:w-auto"
+>
+  Start check-in
+  <span className="ml-2 inline-block transition group-hover:translate-x-0.5">
+    →
+  </span>
+</Link>
 
                   <Link
                     href="/how-it-works"
