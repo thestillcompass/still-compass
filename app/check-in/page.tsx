@@ -16,6 +16,8 @@ export default function CheckInPage() {
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [alreadyCheckedToday, setAlreadyCheckedToday] = useState(false);
+  const [phase, setPhase] = useState<"idle" | "saving" | "calculating">("idle");
+
   useEffect(() => {
   async function checkTodayEntry() {
     const { data: userData } = await supabase.auth.getUser();
@@ -48,6 +50,7 @@ export default function CheckInPage() {
 
   async function submit() {
     setBusy(true);
+    setPhase("saving");
     setStatus(null);
 
     const { data: userData, error: userErr } = await supabase.auth.getUser();
@@ -72,6 +75,12 @@ export default function CheckInPage() {
       setStatus(error.message);
       return;
     }
+
+    setPhase("calculating");
+
+    setTimeout(() => {
+    window.location.href = "/dashboard";
+    }, 1200);
 
     // Go to dashboard after successful check-in
     window.location.href = "/dashboard";
@@ -173,7 +182,11 @@ if (alreadyCheckedToday) {
               disabled={busy}
               className="rounded-2xl bg-white px-6 py-3 text-sm font-semibold text-black hover:bg-white/90 disabled:opacity-60"
             >
-              {busy ? "Saving…" : "Save check-in"}
+              {phase === "saving"
+  ? "Saving alignment…"
+  : phase === "calculating"
+  ? "Calculating signal…"
+  : "Save check-in"}
             </button>
           </div>
 
