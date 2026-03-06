@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { computeCompassScore } from "@/lib/compass";
 
@@ -15,6 +15,30 @@ export default function CheckInPage() {
   const [note, setNote] = useState("");
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [alreadyCheckedToday, setAlreadyCheckedToday] = useState(false);
+  useEffect(() => {
+  async function checkTodayEntry() {
+    const { data: userData } = await supabase.auth.getUser();
+
+    if (!userData.user) return;
+
+    const today = new Date().toISOString().split("T")[0];
+
+    const { data } = await supabase
+      .from("entries")
+      .select("id")
+      .eq("user_id", userData.user.id)
+      .gte("created_at", `${today}T00:00:00`)
+      .lte("created_at", `${today}T23:59:59`)
+      .limit(1);
+
+    if (data && data.length > 0) {
+      setAlreadyCheckedToday(true);
+    }
+  }
+
+  checkTodayEntry();
+}, []);
 
   const compassScore = computeCompassScore({
     emotional_signal: emotionalSignal,
@@ -52,7 +76,28 @@ export default function CheckInPage() {
     // Go to dashboard after successful check-in
     window.location.href = "/dashboard";
   }
+if (alreadyCheckedToday) {
+  return (
+    <main className="min-h-screen flex items-center justify-center bg-black text-white">
+      <div className="text-center">
+        <h1 className="text-xl font-semibold">
+          Daily alignment already logged.
+        </h1>
 
+        <p className="mt-2 text-white/60">
+          Come back tomorrow to record a new signal.
+        </p>
+
+        <Link
+          href="/dashboard"
+          className="mt-6 inline-block rounded-xl border border-white/20 px-5 py-3 text-sm hover:bg-white/10"
+        >
+          Return to dashboard
+        </Link>
+      </div>
+    </main>
+  );
+}
   return (
     <main className="min-h-screen bg-black text-white">
       <div className="mx-auto max-w-2xl px-6 py-16">
