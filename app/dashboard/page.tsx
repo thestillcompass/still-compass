@@ -20,6 +20,7 @@ export default function DashboardPage() {
   const [email, setEmail] = useState<string | null>(null);
   const [name, setName] = useState<string | null>(null);
   const [latest, setLatest] = useState<Entry | null>(null);
+  const [recentEntries, setRecentEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -44,12 +45,14 @@ export default function DashboardPage() {
         .from("entries")
         .select("*")
         .order("created_at", { ascending: false })
-        .limit(1);
+        .limit(7);
 
       if (!mounted) return;
 
-      if (!error) {
-        setLatest((data?.[0] as Entry) ?? null);
+      if (!error && data) {
+        const entries = data as Entry[];
+        setRecentEntries(entries);
+        setLatest(entries[0] ?? null);
       }
 
       setLoading(false);
@@ -90,6 +93,18 @@ export default function DashboardPage() {
     else if (score >= 7) scoreColor = "text-amber-400";
     else scoreColor = "text-red-400";
   }
+
+  const trendScores = [...recentEntries]
+    .reverse()
+    .map((entry) =>
+      computeCompassScore({
+        emotional_signal: entry.emotional_signal,
+        vital_energy: entry.vital_energy,
+        cognitive_load: entry.cognitive_load,
+      }).toFixed(1)
+    );
+
+  const trendText = trendScores.join(" → ");
 
   const todayLabel = useMemo(() => {
     return new Date().toLocaleDateString("en-US", {
@@ -147,9 +162,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="mt-3 text-sm text-white/70">
-            {loading
-              ? "Loading latest signal…"
-              : drift?.status ?? "No signal yet."}
+            {loading ? "Loading latest signal…" : drift?.status ?? "No signal yet."}
           </div>
         </div>
 
@@ -176,6 +189,24 @@ export default function DashboardPage() {
 
             <div className="mt-2 text-sm text-white/80">
               {adjustment ?? "Log a check-in to receive guidance."}
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:col-span-2">
+            <div className="text-xs tracking-wide text-white/60">
+              7-DAY TREND
+            </div>
+
+            <div className="mt-3 text-sm text-white/85">
+              {loading
+                ? "Loading trend…"
+                : trendScores.length > 0
+                ? trendText
+                : "Not enough data yet."}
+            </div>
+
+            <div className="mt-2 text-xs text-white/50">
+              Most recent 7 alignment scores, oldest to newest.
             </div>
           </div>
 
