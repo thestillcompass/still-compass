@@ -75,6 +75,13 @@ export default function DashboardPage() {
       vital_energy: latest.vital_energy,
       cognitive_load: latest.cognitive_load,
     });
+    let scoreColor = "text-white";
+
+if (score !== null && score !== undefined) {
+  if (score >= 8.5) scoreColor = "text-green-400";
+  else if (score >= 7) scoreColor = "text-amber-400";
+  else scoreColor = "text-red-400";
+}
   const drift = score ? computeDriftStatus(score) : null;
   const adjustment = score ? microAdjustment(score) : null;
 
@@ -118,7 +125,7 @@ export default function DashboardPage() {
             <div className="text-xs tracking-wide text-white/60">
               COMPASS SCORE
             </div>
-            <div className="mt-2 text-4xl font-semibold">
+            <div className={`mt-2 text-4xl font-semibold ${scoreColor}`}>
               {loading ? "…" : score ?? "—"}
             </div>
             <div className="mt-2 text-sm text-white/70">
