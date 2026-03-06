@@ -1,5 +1,11 @@
 "use client";
 
+import {
+  LineChart,
+  Line,
+  ResponsiveContainer,
+  Tooltip,
+} from "recharts";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
@@ -15,6 +21,38 @@ type Entry = {
   note: string | null;
   created_at: string;
 };
+
+function detectPatternInsight(entries: Entry[]) {
+  if (entries.length < 3) {
+    return "Not enough data yet to identify a meaningful pattern.";
+  }
+
+  const recent = [...entries].slice(0, 3).reverse();
+
+  const emotional = recent.map((e) => e.emotional_signal);
+  const energy = recent.map((e) => e.vital_energy);
+  const load = recent.map((e) => e.cognitive_load);
+
+  const isIncreasing = (arr: number[]) =>
+    arr[0] < arr[1] && arr[1] <= arr[2];
+
+  const isDecreasing = (arr: number[]) =>
+    arr[0] > arr[1] && arr[1] >= arr[2];
+
+  if (isIncreasing(load)) {
+    return "Cognitive load has increased across your recent alignments.";
+  }
+
+  if (isDecreasing(energy)) {
+    return "Vital energy has been declining across recent entries.";
+  }
+
+  if (isDecreasing(emotional)) {
+    return "Emotional signal has softened across your recent alignments.";
+  }
+
+  return "Your signals are relatively stable. No strong drift pattern detected yet.";
+}
 
 export default function DashboardPage() {
   const [email, setEmail] = useState<string | null>(null);
@@ -120,7 +158,10 @@ export default function DashboardPage() {
       })
     );
 
-  const trendText = trendScores.map((s) => s.toFixed(1)).join(" → ");
+  const chartData = trendScores.map((score, index) => ({
+    day: index + 1,
+    score,
+  }));
 
   const previousScore =
     trendScores.length >= 2 ? trendScores[trendScores.length - 2] : null;
@@ -176,6 +217,10 @@ export default function DashboardPage() {
     }
 
     return streak;
+  }, [recentEntries]);
+
+  const patternInsight = useMemo(() => {
+    return detectPatternInsight(recentEntries);
   }, [recentEntries]);
 
   return (
@@ -269,6 +314,16 @@ export default function DashboardPage() {
             </div>
           </div>
 
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:col-span-2">
+            <div className="text-xs tracking-wide text-white/60">
+              PATTERN INSIGHT
+            </div>
+
+            <div className="mt-2 text-sm text-white/80">
+              {loading ? "Detecting patterns…" : patternInsight}
+            </div>
+          </div>
+
           <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
             <div className="text-xs tracking-wide text-white/60">
               TODAY&apos;S ADJUSTMENT
@@ -302,12 +357,30 @@ export default function DashboardPage() {
               7-DAY TREND
             </div>
 
-            <div className="mt-3 text-sm text-white/85">
-              {loading
-                ? "Loading trend…"
-                : trendScores.length > 0
-                ? trendText
-                : "Not enough data yet."}
+            <div className="mt-4 h-40">
+              {loading ? (
+                <div className="text-white/60">Loading trend…</div>
+              ) : chartData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData}>
+                    <Tooltip
+                      contentStyle={{
+                        background: "#000",
+                        border: "1px solid rgba(255,255,255,0.1)",
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="score"
+                      stroke="#ffffff"
+                      strokeWidth={2}
+                      dot={{ r: 3 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="text-white/60">Not enough data yet.</div>
+              )}
             </div>
 
             <div className="mt-2 text-xs text-white/50">
