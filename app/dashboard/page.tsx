@@ -101,10 +101,23 @@ export default function DashboardPage() {
         emotional_signal: entry.emotional_signal,
         vital_energy: entry.vital_energy,
         cognitive_load: entry.cognitive_load,
-      }).toFixed(1)
+      })
     );
 
-  const trendText = trendScores.join(" → ");
+  const trendText = trendScores.map((s) => s.toFixed(1)).join(" → ");
+
+  const previousScore =
+    trendScores.length >= 2 ? trendScores[trendScores.length - 2] : null;
+
+  const scoreDrop =
+    score !== null &&
+    score !== undefined &&
+    previousScore !== null &&
+    previousScore !== undefined
+      ? previousScore - score
+      : null;
+
+  const showDriftAlert = scoreDrop !== null && scoreDrop >= 1.2;
 
   const todayLabel = useMemo(() => {
     return new Date().toLocaleDateString("en-US", {
@@ -150,6 +163,22 @@ export default function DashboardPage() {
           </h1>
           <p className="mt-2 text-white/65">Alignment check for today.</p>
         </div>
+
+        {/* Drift alert */}
+        {showDriftAlert && (
+          <div className="mt-8 rounded-3xl border border-red-400/20 bg-red-400/10 p-6">
+            <div className="text-xs tracking-wide text-red-300">
+              DRIFT ALERT
+            </div>
+            <div className="mt-2 text-lg font-semibold text-white">
+              Your Compass Score dropped significantly.
+            </div>
+            <div className="mt-2 text-sm text-white/75">
+              Since your previous alignment, your score has fallen by{" "}
+              <span className="text-white">{scoreDrop?.toFixed(1)}</span> points.
+            </div>
+          </div>
+        )}
 
         {/* Main score card */}
         <div className="mt-10 rounded-3xl border border-white/10 bg-white/5 p-8">
