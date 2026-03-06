@@ -16,31 +16,31 @@ export default function CheckInPage() {
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [alreadyCheckedToday, setAlreadyCheckedToday] = useState(false);
-  const [phase, setPhase] = useState<"idle" | "saving" | "calculating">("idle");
+  const [phase, setPhase] = useState<"idle" | "saving" | "calculating" | "recorded">("idle");
 
   useEffect(() => {
-  async function checkTodayEntry() {
-    const { data: userData } = await supabase.auth.getUser();
+    async function checkTodayEntry() {
+      const { data: userData } = await supabase.auth.getUser();
 
-    if (!userData.user) return;
+      if (!userData.user) return;
 
-    const today = new Date().toISOString().split("T")[0];
+      const today = new Date().toISOString().split("T")[0];
 
-    const { data } = await supabase
-      .from("entries")
-      .select("id")
-      .eq("user_id", userData.user.id)
-      .gte("created_at", `${today}T00:00:00`)
-      .lte("created_at", `${today}T23:59:59`)
-      .limit(1);
+      const { data } = await supabase
+        .from("entries")
+        .select("id")
+        .eq("user_id", userData.user.id)
+        .gte("created_at", `${today}T00:00:00`)
+        .lte("created_at", `${today}T23:59:59`)
+        .limit(1);
 
-    if (data && data.length > 0) {
-      setAlreadyCheckedToday(true);
+      if (data && data.length > 0) {
+        setAlreadyCheckedToday(true);
+      }
     }
-  }
 
-  checkTodayEntry();
-}, []);
+    checkTodayEntry();
+  }, []);
 
   const compassScore = computeCompassScore({
     emotional_signal: emotionalSignal,
@@ -56,6 +56,7 @@ export default function CheckInPage() {
     const { data: userData, error: userErr } = await supabase.auth.getUser();
     if (userErr || !userData.user) {
       setBusy(false);
+      setPhase("idle");
       setStatus("You must be signed in to check in.");
       return;
     }
@@ -69,9 +70,9 @@ export default function CheckInPage() {
       note: note.trim() ? note.trim() : null,
     });
 
-    setBusy(false);
-
     if (error) {
+      setBusy(false);
+      setPhase("idle");
       setStatus(error.message);
       return;
     }
@@ -79,34 +80,38 @@ export default function CheckInPage() {
     setPhase("calculating");
 
     setTimeout(() => {
-    window.location.href = "/dashboard";
-    }, 1200);
+      setPhase("recorded");
+    }, 900);
 
-    // Go to dashboard after successful check-in
-    window.location.href = "/dashboard";
+    setTimeout(() => {
+      setBusy(false);
+      window.location.href = "/dashboard";
+    }, 1800);
   }
-if (alreadyCheckedToday) {
-  return (
-    <main className="min-h-screen flex items-center justify-center bg-black text-white">
-      <div className="text-center">
-        <h1 className="text-xl font-semibold">
-          Daily alignment already logged.
-        </h1>
 
-        <p className="mt-2 text-white/60">
-          Come back tomorrow to record a new signal.
-        </p>
+  if (alreadyCheckedToday) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-black text-white">
+        <div className="text-center">
+          <h1 className="text-xl font-semibold">
+            Daily alignment already logged.
+          </h1>
 
-        <Link
-          href="/dashboard"
-          className="mt-6 inline-block rounded-xl border border-white/20 px-5 py-3 text-sm hover:bg-white/10"
-        >
-          Return to dashboard
-        </Link>
-      </div>
-    </main>
-  );
-}
+          <p className="mt-2 text-white/60">
+            Come back tomorrow to record a new signal.
+          </p>
+
+          <Link
+            href="/dashboard"
+            className="mt-6 inline-block rounded-xl border border-white/20 px-5 py-3 text-sm hover:bg-white/10"
+          >
+            Return to dashboard
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-black text-white">
       <div className="mx-auto max-w-2xl px-6 py-16">
@@ -183,10 +188,12 @@ if (alreadyCheckedToday) {
               className="rounded-2xl bg-white px-6 py-3 text-sm font-semibold text-black hover:bg-white/90 disabled:opacity-60"
             >
               {phase === "saving"
-  ? "Saving alignment…"
-  : phase === "calculating"
-  ? "Calculating signal…"
-  : "Save check-in"}
+                ? "Saving alignment…"
+                : phase === "calculating"
+                ? "Calculating signal…"
+                : phase === "recorded"
+                ? "Alignment recorded."
+                : "Save check-in"}
             </button>
           </div>
 
