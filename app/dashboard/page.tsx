@@ -86,6 +86,21 @@ export default function DashboardPage() {
   const drift = score ? computeDriftStatus(score) : null;
   const adjustment = score ? microAdjustment(score) : null;
 
+  let interpretation: string | null = null;
+
+  if (score !== null && score !== undefined) {
+    if (score >= 8.5) {
+      interpretation =
+        "Your signals indicate strong alignment today. Maintain your current rhythm.";
+    } else if (score >= 7) {
+      interpretation =
+        "Your signals suggest mild drift today. Small adjustments may restore clarity.";
+    } else {
+      interpretation =
+        "Your signals indicate cognitive overload or emotional drag. Reducing decision load may help restore balance.";
+    }
+  }
+
   let scoreColor = "text-white";
 
   if (score !== null && score !== undefined) {
@@ -216,7 +231,9 @@ export default function DashboardPage() {
             COMPASS SCORE
           </div>
 
-          <div className={`mt-3 text-6xl font-semibold tracking-tight ${scoreColor}`}>
+          <div
+            className={`mt-3 text-6xl font-semibold tracking-tight ${scoreColor}`}
+          >
             {loading ? "…" : score ?? "—"}
           </div>
 
@@ -237,6 +254,18 @@ export default function DashboardPage() {
 
             <div className="mt-2 text-sm text-white/70">
               {drift?.message ?? "No signal yet."}
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <div className="text-xs tracking-wide text-white/60">
+              INTERPRETATION
+            </div>
+
+            <div className="mt-2 text-sm text-white/80">
+              {loading
+                ? "Interpreting signal…"
+                : interpretation ?? "Log a check-in to receive interpretation."}
             </div>
           </div>
 
@@ -268,7 +297,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:col-span-2">
             <div className="text-xs tracking-wide text-white/60">
               7-DAY TREND
             </div>
