@@ -45,7 +45,7 @@ export default function DashboardPage() {
         .from("entries")
         .select("*")
         .order("created_at", { ascending: false })
-        .limit(7);
+        .limit(30);
 
       if (!mounted) return;
 
@@ -95,6 +95,7 @@ export default function DashboardPage() {
   }
 
   const trendScores = [...recentEntries]
+    .slice(0, 7)
     .reverse()
     .map((entry) =>
       computeCompassScore({
@@ -129,10 +130,42 @@ export default function DashboardPage() {
 
   const welcomeName = name || email || "there";
 
+  const rhythmDays = useMemo(() => {
+    if (recentEntries.length === 0) return 0;
+
+    const uniqueDays = Array.from(
+      new Set(
+        recentEntries.map((entry) =>
+          new Date(entry.created_at).toISOString().split("T")[0]
+        )
+      )
+    ).sort((a, b) => (a < b ? 1 : -1));
+
+    if (uniqueDays.length === 0) return 0;
+
+    let streak = 1;
+
+    for (let i = 1; i < uniqueDays.length; i++) {
+      const current = new Date(uniqueDays[i - 1]);
+      const next = new Date(uniqueDays[i]);
+
+      current.setDate(current.getDate() - 1);
+
+      const expected = current.toISOString().split("T")[0];
+
+      if (next === expected) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+
+    return streak;
+  }, [recentEntries]);
+
   return (
     <main className="min-h-screen bg-black text-white">
       <div className="mx-auto max-w-5xl px-6 py-16">
-        {/* Top bar */}
         <div className="flex items-center justify-between">
           <Link href="/" className="text-sm text-white/70 hover:text-white">
             ← Home
@@ -155,7 +188,6 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Header */}
         <div className="mt-10">
           <p className="text-sm text-white/50">{todayLabel}</p>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -164,7 +196,6 @@ export default function DashboardPage() {
           <p className="mt-2 text-white/65">Alignment check for today.</p>
         </div>
 
-        {/* Drift alert */}
         {showDriftAlert && (
           <div className="mt-8 rounded-3xl border border-red-400/20 bg-red-400/10 p-6">
             <div className="text-xs tracking-wide text-red-300">
@@ -180,7 +211,6 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Main score card */}
         <div className="mt-10 rounded-3xl border border-white/10 bg-white/5 p-8">
           <div className="text-xs tracking-wide text-white/60">
             COMPASS SCORE
@@ -195,7 +225,6 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Supporting cards */}
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
           <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
             <div className="text-xs tracking-wide text-white/60">
@@ -221,7 +250,25 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:col-span-2">
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <div className="text-xs tracking-wide text-white/60">
+              ALIGNMENT RHYTHM
+            </div>
+
+            <div className="mt-2 text-2xl font-semibold">
+              {loading ? "…" : rhythmDays}
+            </div>
+
+            <div className="mt-2 text-sm text-white/70">
+              {loading
+                ? "Loading rhythm…"
+                : rhythmDays === 1
+                ? "1 consecutive day"
+                : `${rhythmDays} consecutive days`}
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
             <div className="text-xs tracking-wide text-white/60">
               7-DAY TREND
             </div>
