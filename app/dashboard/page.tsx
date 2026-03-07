@@ -131,6 +131,106 @@ function detectSignalDriver(entry: Entry | null) {
   return "No dominant signal driver detected yet.";
 }
 
+function detectContextInsight(entries: Entry[]) {
+  if (entries.length < 4) {
+    return "Not enough context data yet to identify a dominant pattern.";
+  }
+
+  const recent = [...entries].slice(0, 7);
+
+  const grouped: Record<string, number[]> = {};
+
+  for (const entry of recent) {
+    const score = computeCompassScore({
+      emotional_signal: entry.emotional_signal,
+      vital_energy: entry.vital_energy,
+      cognitive_load: entry.cognitive_load,
+    });
+
+    if (!grouped[entry.context]) {
+      grouped[entry.context] = [];
+    }
+
+    grouped[entry.context].push(score);
+  }
+
+  const contexts = Object.entries(grouped)
+    .map(([context, scores]) => ({
+      context,
+      average: scores.reduce((sum, value) => sum + value, 0) / scores.length,
+    }));
+
+  if (contexts.length < 2) {
+    return "Not enough context variation yet to identify a dominant pattern.";
+  }
+
+  contexts.sort((a, b) => a.average - b.average);
+
+  const lowest = contexts[0];
+  const highest = contexts[contexts.length - 1];
+
+  if (highest.average - lowest.average < 0.6) {
+    return "No strong context effect is visible yet across your recent alignments.";
+  }
+
+  return `Your lowest recent alignment tends to occur in ${lowest.context} contexts. ${highest.context} contexts are showing stronger alignment.`;
+}
+
+function detectNoteInsight(entries: Entry[]) {
+  const notes = entries
+    .slice(0, 10)
+    .map((e) => e.note?.toLowerCase().trim())
+    .filter((note): note is string => Boolean(note));
+
+  if (notes.length < 3) {
+    return "Not enough written reflections yet to identify a note pattern.";
+  }
+
+  const buckets = {
+    work: ["work", "meeting", "meetings", "deadline", "client", "office", "project"],
+    sleep: ["sleep", "tired", "rest", "exhausted", "fatigue", "fatigued"],
+    people: ["people", "team", "friend", "family", "conversation", "social"],
+    stress: ["stress", "stressed", "pressure", "anxious", "overwhelmed", "overload"],
+    progress: ["progress", "momentum", "stuck", "blocked", "moving", "productive"],
+    health: ["health", "exercise", "walk", "sick", "ill", "body", "workout"],
+  };
+
+  const counts: Record<string, number> = {
+    work: 0,
+    sleep: 0,
+    people: 0,
+    stress: 0,
+    progress: 0,
+    health: 0,
+  };
+
+  for (const note of notes) {
+    for (const [bucket, keywords] of Object.entries(buckets)) {
+      if (keywords.some((word) => note.includes(word))) {
+        counts[bucket] += 1;
+      }
+    }
+  }
+
+  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  const [topBucket, topCount] = sorted[0];
+
+  if (!topBucket || topCount < 2) {
+    return "No strong written theme is visible yet across your recent reflections.";
+  }
+
+  const messages: Record<string, string> = {
+    work: "Your recent notes frequently mention work pressure or meeting load.",
+    sleep: "Your recent notes suggest sleep or recovery may be a recurring theme.",
+    people: "Your recent reflections repeatedly mention people or social dynamics.",
+    stress: "Stress and pressure appear repeatedly in your recent notes.",
+    progress: "Progress and momentum appear to be recurring themes in your reflections.",
+    health: "Health and physical state appear repeatedly in your recent notes.",
+  };
+
+  return messages[topBucket] ?? "A repeated written theme is emerging in your recent reflections.";
+}
+
 export default function DashboardPage() {
   const [email, setEmail] = useState<string | null>(null);
   const [name, setName] = useState<string | null>(null);
@@ -297,13 +397,11 @@ export default function DashboardPage() {
     return streak;
   }, [recentEntries]);
 
-  const patternInsight = useMemo(() => {
-    return detectPatternInsight(recentEntries);
-  }, [recentEntries]);
-
-  const weeklyInsight = useMemo(() => {
-    return detectWeeklyInsight(recentEntries);
-  }, [recentEntries]);
+  const patternInsight = useMemo(() => detectPatternInsight(recentEntries), [recentEntries]);
+  const weeklyInsight = useMemo(() => detectWeeklyInsight(recentEntries), [recentEntries]);
+  const signalDriver = useMemo(() => detectSignalDriver(latest), [latest]);
+  const contextInsight = useMemo(() => detectContextInsight(recentEntries), [recentEntries]);
+  const noteInsight = useMemo(() => detectNoteInsight(recentEntries), [recentEntries]);
 
   const baselineScores = useMemo(() => {
     return [...recentEntries]
@@ -319,8 +417,7 @@ export default function DashboardPage() {
 
   const baseline =
     baselineScores.length >= 14
-      ? baselineScores.reduce((sum, value) => sum + value, 0) /
-        baselineScores.length
+      ? baselineScores.reduce((sum, value) => sum + value, 0) / baselineScores.length
       : null;
 
   const baselineDelta =
@@ -340,10 +437,6 @@ export default function DashboardPage() {
       baselineMessage = "You are currently close to your usual alignment range.";
     }
   }
-
-  const signalDriver = useMemo(() => {
-    return detectSignalDriver(latest);
-  }, [latest]);
 
   return (
     <main className="min-h-screen bg-black text-white">
@@ -393,14 +486,13 @@ export default function DashboardPage() {
           </div>
         )}
 
+        {/* Core signal */}
         <div className="mt-10 rounded-3xl border border-white/10 bg-white/5 p-8">
           <div className="text-xs tracking-wide text-white/60">
             COMPASS SCORE
           </div>
 
-          <div
-            className={`mt-3 text-6xl font-semibold tracking-tight ${scoreColor}`}
-          >
+          <div className={`mt-3 text-6xl font-semibold tracking-tight ${scoreColor}`}>
             {loading ? "…" : score ?? "—"}
           </div>
 
@@ -409,192 +501,183 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+        <div className="mt-6 grid gap-4 sm:grid-cols-3">
           <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <div className="text-xs tracking-wide text-white/60">
-              DRIFT STATUS
-            </div>
-
-            <div className="mt-2 text-xl font-semibold">
-              {drift?.status ?? "—"}
-            </div>
-
+            <div className="text-xs tracking-wide text-white/60">DRIFT STATUS</div>
+            <div className="mt-2 text-xl font-semibold">{drift?.status ?? "—"}</div>
             <div className="mt-2 text-sm text-white/70">
               {drift?.message ?? "No signal yet."}
             </div>
           </div>
 
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <div className="text-xs tracking-wide text-white/60">
-              INTERPRETATION
-            </div>
-
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:col-span-2">
+            <div className="text-xs tracking-wide text-white/60">INTERPRETATION</div>
             <div className="mt-2 text-sm text-white/80">
               {loading
                 ? "Interpreting signal…"
                 : interpretation ?? "Log a check-in to receive interpretation."}
             </div>
           </div>
+        </div>
 
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:col-span-2">
-            <div className="text-xs tracking-wide text-white/60">
-              SIGNAL DRIVER
+        <div className="mt-4 rounded-3xl border border-white/10 bg-white/5 p-6">
+          <div className="text-xs tracking-wide text-white/60">TODAY&apos;S ADJUSTMENT</div>
+          <div className="mt-2 text-sm text-white/80">
+            {adjustment ?? "Log a check-in to receive guidance."}
+          </div>
+        </div>
+
+        {/* Intelligence layer */}
+        <div className="mt-10">
+          <div className="text-xs tracking-wide text-white/40">INTELLIGENCE</div>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+              <div className="text-xs tracking-wide text-white/60">SIGNAL DRIVER</div>
+              <div className="mt-2 text-sm text-white/80">
+                {loading ? "Identifying dominant driver…" : signalDriver}
+              </div>
             </div>
 
-            <div className="mt-2 text-sm text-white/80">
-              {loading ? "Identifying dominant driver…" : signalDriver}
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+              <div className="text-xs tracking-wide text-white/60">CONTEXT INSIGHT</div>
+              <div className="mt-2 text-sm text-white/80">
+                {loading ? "Analyzing context patterns…" : contextInsight}
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+              <div className="text-xs tracking-wide text-white/60">PATTERN INSIGHT</div>
+              <div className="mt-2 text-sm text-white/80">
+                {loading ? "Detecting patterns…" : patternInsight}
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+              <div className="text-xs tracking-wide text-white/60">WEEKLY INSIGHT</div>
+              <div className="mt-2 text-sm text-white/80">
+                {loading ? "Analyzing weekly signal…" : weeklyInsight}
+              </div>
             </div>
           </div>
+        </div>
 
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:col-span-2">
-            <div className="text-xs tracking-wide text-white/60">
-              PERSONAL BASELINE
-            </div>
+        {/* Secondary layer */}
+        <div className="mt-10">
+          <div className="text-xs tracking-wide text-white/40">SECONDARY SIGNALS</div>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+              <div className="text-xs tracking-wide text-white/60">PERSONAL BASELINE</div>
 
-            {loading ? (
-              <div className="mt-2 text-sm text-white/70">Calculating baseline…</div>
-            ) : baseline !== null ? (
-              <>
-                <div className="mt-2 text-2xl font-semibold">
-                  {baseline.toFixed(1)}
-                </div>
-                <div className="mt-2 text-sm text-white/70">
-                  Current deviation:{" "}
-                  <span className="text-white">
-                    {baselineDelta !== null
-                      ? `${baselineDelta >= 0 ? "+" : ""}${baselineDelta.toFixed(1)}`
-                      : "—"}
-                  </span>
-                </div>
-                <div className="mt-2 text-sm text-white/80">{baselineMessage}</div>
-              </>
-            ) : (
-              <div className="mt-2 text-sm text-white/80">{baselineMessage}</div>
-            )}
-          </div>
-
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:col-span-2">
-            <div className="text-xs tracking-wide text-white/60">
-              PATTERN INSIGHT
-            </div>
-
-            <div className="mt-2 text-sm text-white/80">
-              {loading ? "Detecting patterns…" : patternInsight}
-            </div>
-          </div>
-
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:col-span-2">
-            <div className="text-xs tracking-wide text-white/60">
-              WEEKLY INSIGHT
-            </div>
-
-            <div className="mt-2 text-sm text-white/80">
-              {loading ? "Analyzing weekly signal…" : weeklyInsight}
-            </div>
-          </div>
-
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <div className="text-xs tracking-wide text-white/60">
-              TODAY&apos;S ADJUSTMENT
-            </div>
-
-            <div className="mt-2 text-sm text-white/80">
-              {adjustment ?? "Log a check-in to receive guidance."}
-            </div>
-          </div>
-
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <div className="text-xs tracking-wide text-white/60">
-              ALIGNMENT RHYTHM
-            </div>
-
-            <div className="mt-2 text-2xl font-semibold">
-              {loading ? "…" : rhythmDays}
-            </div>
-
-            <div className="mt-2 text-sm text-white/70">
-              {loading
-                ? "Loading rhythm…"
-                : rhythmDays === 1
-                ? "1 consecutive day"
-                : `${rhythmDays} consecutive days`}
-            </div>
-          </div>
-
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:col-span-2">
-            <div className="text-xs tracking-wide text-white/60">
-              7-DAY TREND
-            </div>
-
-            <div className="mt-4 h-40">
               {loading ? (
-                <div className="text-white/60">Loading trend…</div>
-              ) : chartData.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={chartData}>
-                    <Tooltip
-                      contentStyle={{
-                        background: "#000",
-                        border: "1px solid rgba(255,255,255,0.1)",
-                      }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="score"
-                      stroke="#ffffff"
-                      strokeWidth={2}
-                      dot={{ r: 3 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+                <div className="mt-2 text-sm text-white/70">Calculating baseline…</div>
+              ) : baseline !== null ? (
+                <>
+                  <div className="mt-2 text-2xl font-semibold">{baseline.toFixed(1)}</div>
+                  <div className="mt-2 text-sm text-white/70">
+                    Current deviation:{" "}
+                    <span className="text-white">
+                      {baselineDelta !== null
+                        ? `${baselineDelta >= 0 ? "+" : ""}${baselineDelta.toFixed(1)}`
+                        : "—"}
+                    </span>
+                  </div>
+                  <div className="mt-2 text-sm text-white/80">{baselineMessage}</div>
+                </>
               ) : (
-                <div className="text-white/60">Not enough data yet.</div>
+                <div className="mt-2 text-sm text-white/80">{baselineMessage}</div>
               )}
             </div>
 
-            <div className="mt-2 text-xs text-white/50">
-              Most recent 7 alignment scores, oldest to newest.
-            </div>
-          </div>
-
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:col-span-2">
-            <div className="text-xs tracking-wide text-white/60">
-              LATEST CHECK-IN
-            </div>
-
-            {loading ? (
-              <div className="mt-3 text-white/60">Loading…</div>
-            ) : latest ? (
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <div className="space-y-2 text-white/80">
-                  <div>
-                    Emotional Signal:{" "}
-                    <span className="text-white">{latest.emotional_signal}</span>
-                  </div>
-                  <div>
-                    Vital Energy:{" "}
-                    <span className="text-white">{latest.vital_energy}</span>
-                  </div>
-                  <div>
-                    Cognitive Load:{" "}
-                    <span className="text-white">{latest.cognitive_load}</span>
-                  </div>
-                  <div>
-                    Context: <span className="text-white">{latest.context}</span>
-                  </div>
-                </div>
-
-                <div>
-                  {latest.note ? (
-                    <div className="text-white/70">“{latest.note}”</div>
-                  ) : (
-                    <div className="text-white/50">No note recorded.</div>
-                  )}
-                </div>
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+              <div className="text-xs tracking-wide text-white/60">ALIGNMENT RHYTHM</div>
+              <div className="mt-2 text-2xl font-semibold">{loading ? "…" : rhythmDays}</div>
+              <div className="mt-2 text-sm text-white/70">
+                {loading
+                  ? "Loading rhythm…"
+                  : rhythmDays === 1
+                  ? "1 consecutive day"
+                  : `${rhythmDays} consecutive days`}
               </div>
-            ) : (
-              <div className="mt-3 text-white/60">Log your first check-in.</div>
-            )}
+            </div>
+
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:col-span-2">
+              <div className="text-xs tracking-wide text-white/60">7-DAY TREND</div>
+
+              <div className="mt-4 h-40">
+                {loading ? (
+                  <div className="text-white/60">Loading trend…</div>
+                ) : chartData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={chartData}>
+                      <Tooltip
+                        contentStyle={{
+                          background: "#000",
+                          border: "1px solid rgba(255,255,255,0.1)",
+                        }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="score"
+                        stroke="#ffffff"
+                        strokeWidth={2}
+                        dot={{ r: 3 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="text-white/60">Not enough data yet.</div>
+                )}
+              </div>
+
+              <div className="mt-2 text-xs text-white/50">
+                Most recent 7 alignment scores, oldest to newest.
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:col-span-2">
+              <div className="text-xs tracking-wide text-white/60">NOTE INSIGHT</div>
+              <div className="mt-2 text-sm text-white/80">
+                {loading ? "Analyzing reflection notes…" : noteInsight}
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:col-span-2">
+              <div className="text-xs tracking-wide text-white/60">LATEST CHECK-IN</div>
+
+              {loading ? (
+                <div className="mt-3 text-white/60">Loading…</div>
+              ) : latest ? (
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-2 text-white/80">
+                    <div>
+                      Emotional Signal:{" "}
+                      <span className="text-white">{latest.emotional_signal}</span>
+                    </div>
+                    <div>
+                      Vital Energy:{" "}
+                      <span className="text-white">{latest.vital_energy}</span>
+                    </div>
+                    <div>
+                      Cognitive Load:{" "}
+                      <span className="text-white">{latest.cognitive_load}</span>
+                    </div>
+                    <div>
+                      Context: <span className="text-white">{latest.context}</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    {latest.note ? (
+                      <div className="text-white/70">“{latest.note}”</div>
+                    ) : (
+                      <div className="text-white/50">No note recorded.</div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-3 text-white/60">Log your first check-in.</div>
+              )}
+            </div>
           </div>
         </div>
       </div>
