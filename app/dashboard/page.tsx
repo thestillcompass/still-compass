@@ -105,6 +105,32 @@ function detectWeeklyInsight(entries: Entry[]) {
   return "This week, your signals were relatively stable. No major pattern shift detected.";
 }
 
+function detectSignalDriver(entry: Entry | null) {
+  if (!entry) {
+    return "No dominant signal driver detected yet.";
+  }
+
+  const emotionalDrag = 10 - entry.emotional_signal;
+  const energyDrag = 10 - entry.vital_energy;
+  const loadDrag = entry.cognitive_load;
+
+  const maxValue = Math.max(emotionalDrag, energyDrag, loadDrag);
+
+  if (maxValue === loadDrag && loadDrag >= 6) {
+    return "Cognitive Load is the strongest source of drag right now.";
+  }
+
+  if (maxValue === energyDrag && energyDrag >= 4) {
+    return "Vital Energy is the primary limiter of alignment right now.";
+  }
+
+  if (maxValue === emotionalDrag && emotionalDrag >= 4) {
+    return "Emotional Signal appears to be the main driver of your current drift.";
+  }
+
+  return "No dominant signal driver detected yet.";
+}
+
 export default function DashboardPage() {
   const [email, setEmail] = useState<string | null>(null);
   const [name, setName] = useState<string | null>(null);
@@ -293,7 +319,8 @@ export default function DashboardPage() {
 
   const baseline =
     baselineScores.length >= 14
-      ? baselineScores.reduce((sum, value) => sum + value, 0) / baselineScores.length
+      ? baselineScores.reduce((sum, value) => sum + value, 0) /
+        baselineScores.length
       : null;
 
   const baselineDelta =
@@ -301,7 +328,8 @@ export default function DashboardPage() {
       ? score - baseline
       : null;
 
-  let baselineMessage = "Complete 14 daily alignments to establish your baseline.";
+  let baselineMessage =
+    "Complete 14 daily alignments to establish your baseline.";
 
   if (baseline !== null && baselineDelta !== null) {
     if (baselineDelta >= 0.5) {
@@ -312,6 +340,10 @@ export default function DashboardPage() {
       baselineMessage = "You are currently close to your usual alignment range.";
     }
   }
+
+  const signalDriver = useMemo(() => {
+    return detectSignalDriver(latest);
+  }, [latest]);
 
   return (
     <main className="min-h-screen bg-black text-white">
@@ -401,6 +433,16 @@ export default function DashboardPage() {
               {loading
                 ? "Interpreting signal…"
                 : interpretation ?? "Log a check-in to receive interpretation."}
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:col-span-2">
+            <div className="text-xs tracking-wide text-white/60">
+              SIGNAL DRIVER
+            </div>
+
+            <div className="mt-2 text-sm text-white/80">
+              {loading ? "Identifying dominant driver…" : signalDriver}
             </div>
           </div>
 
