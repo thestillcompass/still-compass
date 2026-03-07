@@ -1,28 +1,32 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
 export default function LoginPage() {
-  const searchParams = useSearchParams();
-  const next = searchParams.get("next") || "/dashboard";
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [nextPath, setNextPath] = useState("/dashboard");
 
   useEffect(() => {
-  async function checkUser() {
-    const { data } = await supabase.auth.getUser();
+    const params = new URLSearchParams(window.location.search);
+    const next = params.get("next") || "/dashboard";
+    setNextPath(next);
+  }, []);
 
-    if (data.user) {
-      window.location.href = next;
+  useEffect(() => {
+    async function checkUser() {
+      const { data } = await supabase.auth.getUser();
+
+      if (data.user) {
+        window.location.href = nextPath;
+      }
     }
-  }
 
-  checkUser();
-}, [next]);
+    checkUser();
+  }, [nextPath]);
 
   async function signInWithGoogle() {
     setBusy(true);
@@ -31,12 +35,16 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(
+          nextPath
+        )}`,
       },
     });
 
-    if (error) setStatus(error.message);
-    setBusy(false);
+    if (error) {
+      setStatus(error.message);
+      setBusy(false);
+    }
   }
 
   async function sendMagicLink(e: React.FormEvent) {
@@ -47,12 +55,19 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(
+          nextPath
+        )}`,
       },
     });
 
-    if (error) setStatus(error.message);
-    else setStatus("Magic link sent. Check your inbox.");
+    if (error) {
+      setStatus(error.message);
+      setBusy(false);
+      return;
+    }
+
+    setStatus("Magic link sent. Check your inbox.");
     setBusy(false);
   }
 
