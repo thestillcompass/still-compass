@@ -53,17 +53,16 @@ export default function HomePage() {
   return (
     <main className="min-h-screen text-white">
       <div className="min-h-screen bg-grid bg-gradient-to-b from-black via-zinc-950 to-black">
-        {/* Top nav */}
         <header className="mx-auto flex max-w-6xl items-start justify-between px-6 py-6">
-  <div className="flex flex-col">
-    <div className="text-sm font-semibold tracking-tight text-white/90">
-      The Still Compass
-    </div>
+          <div className="flex flex-col">
+            <div className="text-sm font-semibold tracking-tight text-white/90">
+              The Still Compass
+            </div>
 
-    <div className="mt-1 text-xs text-white/50">
-      Built for clarity, not noise.
-    </div>
-  </div>
+            <div className="mt-1 text-xs text-white/50">
+              Built for clarity, not noise.
+            </div>
+          </div>
 
           <nav className="flex items-center gap-5">
             <Link
@@ -99,10 +98,9 @@ export default function HomePage() {
           </nav>
         </header>
 
-        {/* Hero + Cards (tightened to fit one screen better) */}
         <section className="mx-auto max-w-6xl px-6 pb-10 relative">
           <div className="hero-glow" />
-          {/* Hero */}
+
           <div className="mx-auto flex min-h-[58vh] max-w-3xl flex-col items-center justify-center text-center">
             <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs text-white/70 backdrop-blur">
               Pattern intelligence for high-performing overthinkers
@@ -114,12 +112,11 @@ export default function HomePage() {
             </h1>
 
             <p className="mt-6 text-base leading-relaxed text-white/70 sm:text-lg">
-              The Still Compass turns your daily signals into a Compass Score,
-              highlights drift early, and recommends one precise micro-adjustment
-              to bring you back into alignment.
+              Still Compass transforms your daily signals into a{" "}
+              <span className="text-white/90">Compass Score</span>, detects drift
+              early, and surfaces one precise adjustment to restore alignment.
             </p>
 
-            {/* Logged-in message */}
             {!loadingUser && userEmail ? (
               <p className="mt-5 text-sm text-white/60">
                 {userName ? (
@@ -129,14 +126,13 @@ export default function HomePage() {
                   </>
                 ) : (
                   <>
-                    You’re signed in as{" "}
+                    You&apos;re signed in as{" "}
                     <span className="text-white/85">{userEmail}</span>.
                   </>
                 )}
               </p>
             ) : null}
 
-            {/* CTAs */}
             <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">
               {loadingUser ? (
                 <div className="text-sm text-white/60">Loading…</div>
@@ -146,7 +142,7 @@ export default function HomePage() {
                     href="/check-in"
                     className="group inline-flex w-full items-center justify-center rounded-2xl bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-white/90 sm:w-auto"
                   >
-                    Start today’s check-in
+                    Continue daily alignment
                     <span className="ml-2 inline-block transition group-hover:translate-x-0.5">
                       →
                     </span>
@@ -165,7 +161,7 @@ export default function HomePage() {
                     href="/login?next=/check-in"
                     className="group inline-flex w-full items-center justify-center rounded-2xl bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-white/90 sm:w-auto"
                   >
-                    Start check-in
+                    Start daily alignment
                     <span className="ml-2 inline-block transition group-hover:translate-x-0.5">
                       →
                     </span>
@@ -180,37 +176,37 @@ export default function HomePage() {
                 </>
               )}
             </div>
-
-        
           </div>
 
-          {/* Cards pulled up (no extra section padding) */}
           <div id="how" className="mx-auto mt-2 max-w-5xl">
             <div className="grid gap-4 sm:grid-cols-3">
+              <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+                <div className="text-xs tracking-wide text-white/60">
+                  DAILY ALIGNMENT
+                </div>
+                <p className="mt-3 text-sm text-white/75">
+                  Log three signals in under a minute: Emotional Signal, Vital
+                  Energy, and Cognitive Load.
+                </p>
+              </div>
+
               <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
                 <div className="text-xs tracking-wide text-white/60">
                   COMPASS SCORE
                 </div>
                 <p className="mt-3 text-sm text-white/75">
-                  A simple signal of alignment stability.
+                  Transform those signals into a daily alignment reading and
+                  detect early drift before it compounds.
                 </p>
               </div>
 
               <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
                 <div className="text-xs tracking-wide text-white/60">
-                  DRIFT STATUS
+                  PRECISE ADJUSTMENT
                 </div>
                 <p className="mt-3 text-sm text-white/75">
-                  Early warning before overwhelm compounds.
-                </p>
-              </div>
-
-              <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-                <div className="text-xs tracking-wide text-white/60">
-                  ONE ADJUSTMENT
-                </div>
-                <p className="mt-3 text-sm text-white/75">
-                  Daily micro-action, not a list of advice.
+                  Receive one focused adjustment designed to reduce drag and
+                  restore clarity.
                 </p>
               </div>
             </div>
