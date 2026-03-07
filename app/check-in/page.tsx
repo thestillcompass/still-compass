@@ -5,18 +5,28 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { computeCompassScore } from "@/lib/compass";
 
-const CONTEXT_OPTIONS = ["Work", "Sleep", "People", "Health", "Progress", "Uncertainty"] as const;
+const CONTEXT_OPTIONS = [
+  "Work",
+  "Sleep",
+  "People",
+  "Health",
+  "Progress",
+  "Uncertainty",
+] as const;
 
 export default function CheckInPage() {
   const [emotionalSignal, setEmotionalSignal] = useState(6);
   const [vitalEnergy, setVitalEnergy] = useState(6);
   const [cognitiveLoad, setCognitiveLoad] = useState(5);
-  const [context, setContext] = useState<(typeof CONTEXT_OPTIONS)[number]>("Work");
+  const [context, setContext] =
+    useState<(typeof CONTEXT_OPTIONS)[number]>("Work");
   const [note, setNote] = useState("");
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [alreadyCheckedToday, setAlreadyCheckedToday] = useState(false);
-  const [phase, setPhase] = useState<"idle" | "saving" | "calculating" | "recorded">("idle");
+  const [phase, setPhase] = useState<
+    "idle" | "saving" | "calculating" | "recorded"
+  >("idle");
 
   useEffect(() => {
     async function checkTodayEntry() {
@@ -116,15 +126,21 @@ export default function CheckInPage() {
     <main className="min-h-screen bg-black text-white">
       <div className="mx-auto max-w-2xl px-6 py-16">
         <div className="flex items-center justify-between">
-          <Link href="/dashboard" className="text-sm text-white/70 hover:text-white">
+          <Link
+            href="/dashboard"
+            className="text-sm text-white/70 hover:text-white"
+          >
             ← Dashboard
           </Link>
-          <div className="text-xs text-white/50">Daily Check-in</div>
+          <div className="text-xs text-white/50">Daily Check-In</div>
         </div>
 
-        <h1 className="mt-10 text-3xl font-semibold tracking-tight">Check in</h1>
+        <h1 className="mt-10 text-3xl font-semibold tracking-tight">
+          Check in
+        </h1>
         <p className="mt-3 text-white/70">
-          Log your signals. We’ll compute your <span className="text-white/90">Compass Score</span>.
+          Log your signals. We’ll compute your{" "}
+          <span className="text-white/90">Compass Score</span>.
         </p>
 
         <div className="mt-10 space-y-6">
@@ -145,8 +161,12 @@ export default function CheckInPage() {
           />
 
           <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <div className="text-sm text-white/70">Context</div>
-            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+            <div className="text-sm text-white/70">Primary Context</div>
+            <div className="mt-2 text-xs text-white/45">
+              What is most influencing your alignment right now?
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
               {CONTEXT_OPTIONS.map((opt) => (
                 <button
                   key={opt}
@@ -177,9 +197,15 @@ export default function CheckInPage() {
 
           <div className="rounded-3xl border border-white/10 bg-white/5 p-6 flex items-center justify-between">
             <div>
-              <div className="text-xs tracking-wide text-white/60">COMPASS SCORE</div>
-              <div className="mt-1 text-3xl font-semibold">{compassScore}</div>
-              <div className="mt-1 text-xs text-white/50">Higher = more aligned stability</div>
+              <div className="text-xs tracking-wide text-white/60">
+                COMPASS SCORE
+              </div>
+              <div className="mt-1 text-3xl font-semibold">
+                {compassScore.toFixed(1)}
+              </div>
+              <div className="mt-1 text-xs text-white/50">
+                Higher = more aligned stability
+              </div>
             </div>
 
             <button
@@ -217,16 +243,21 @@ function MetricSlider({
     <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
       <div className="flex items-center justify-between">
         <div className="text-sm text-white/80">{label}</div>
-        <div className="text-sm font-semibold text-white">{value}</div>
+        <div className="text-sm font-semibold text-white">
+          {value.toFixed(1)}
+        </div>
       </div>
+
       <input
         className="mt-4 w-full accent-white"
         type="range"
         min={1}
         max={10}
+        step={0.1}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
       />
+
       <div className="mt-2 flex justify-between text-xs text-white/40">
         <span>1</span>
         <span>10</span>
