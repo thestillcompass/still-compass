@@ -33,11 +33,8 @@ function detectPatternInsight(entries: Entry[]) {
   const energy = recent.map((e) => e.vital_energy);
   const load = recent.map((e) => e.cognitive_load);
 
-  const isIncreasing = (arr: number[]) =>
-    arr[0] < arr[1] && arr[1] <= arr[2];
-
-  const isDecreasing = (arr: number[]) =>
-    arr[0] > arr[1] && arr[1] >= arr[2];
+  const isIncreasing = (arr: number[]) => arr[0] < arr[1] && arr[1] <= arr[2];
+  const isDecreasing = (arr: number[]) => arr[0] > arr[1] && arr[1] >= arr[2];
 
   if (isIncreasing(load)) {
     return "Cognitive load has increased across your recent alignments.";
@@ -52,6 +49,60 @@ function detectPatternInsight(entries: Entry[]) {
   }
 
   return "Your signals are relatively stable. No strong drift pattern detected yet.";
+}
+
+function detectWeeklyInsight(entries: Entry[]) {
+  if (entries.length < 5) {
+    return "Complete more daily alignments to unlock a stronger weekly insight.";
+  }
+
+  const recent = [...entries].slice(0, 7).reverse();
+
+  const scores = recent.map((entry) =>
+    computeCompassScore({
+      emotional_signal: entry.emotional_signal,
+      vital_energy: entry.vital_energy,
+      cognitive_load: entry.cognitive_load,
+    })
+  );
+
+  const firstScore = scores[0];
+  const lastScore = scores[scores.length - 1];
+  const scoreDelta = lastScore - firstScore;
+
+  const emotionalValues = recent.map((e) => e.emotional_signal);
+  const energyValues = recent.map((e) => e.vital_energy);
+  const loadValues = recent.map((e) => e.cognitive_load);
+
+  const range = (arr: number[]) => Math.max(...arr) - Math.min(...arr);
+
+  const emotionalRange = range(emotionalValues);
+  const energyRange = range(energyValues);
+  const loadRange = range(loadValues);
+
+  const maxRange = Math.max(emotionalRange, energyRange, loadRange);
+
+  if (scoreDelta <= -1) {
+    return "This week, your alignment has trended downward. A lighter cognitive load may help restore clarity.";
+  }
+
+  if (scoreDelta >= 1) {
+    return "This week, your alignment has improved steadily. Your current rhythm appears to be working.";
+  }
+
+  if (maxRange === loadRange && loadRange >= 2) {
+    return "This week, cognitive load has been your most unstable signal.";
+  }
+
+  if (maxRange === energyRange && energyRange >= 2) {
+    return "This week, vital energy has shown the most variation.";
+  }
+
+  if (maxRange === emotionalRange && emotionalRange >= 2) {
+    return "This week, emotional signal has been your most variable input.";
+  }
+
+  return "This week, your signals were relatively stable. No major pattern shift detected.";
 }
 
 export default function DashboardPage() {
@@ -208,8 +259,9 @@ export default function DashboardPage() {
       current.setDate(current.getDate() - 1);
 
       const expected = current.toISOString().split("T")[0];
+      const nextDate = next.toISOString().split("T")[0];
 
-      if (next === expected) {
+      if (nextDate === expected) {
         streak++;
       } else {
         break;
@@ -222,6 +274,44 @@ export default function DashboardPage() {
   const patternInsight = useMemo(() => {
     return detectPatternInsight(recentEntries);
   }, [recentEntries]);
+
+  const weeklyInsight = useMemo(() => {
+    return detectWeeklyInsight(recentEntries);
+  }, [recentEntries]);
+
+  const baselineScores = useMemo(() => {
+    return [...recentEntries]
+      .slice(0, 14)
+      .map((entry) =>
+        computeCompassScore({
+          emotional_signal: entry.emotional_signal,
+          vital_energy: entry.vital_energy,
+          cognitive_load: entry.cognitive_load,
+        })
+      );
+  }, [recentEntries]);
+
+  const baseline =
+    baselineScores.length >= 14
+      ? baselineScores.reduce((sum, value) => sum + value, 0) / baselineScores.length
+      : null;
+
+  const baselineDelta =
+    baseline !== null && score !== null && score !== undefined
+      ? score - baseline
+      : null;
+
+  let baselineMessage = "Complete 14 daily alignments to establish your baseline.";
+
+  if (baseline !== null && baselineDelta !== null) {
+    if (baselineDelta >= 0.5) {
+      baselineMessage = "You are currently above your usual alignment range.";
+    } else if (baselineDelta <= -0.5) {
+      baselineMessage = "You are currently below your usual alignment range.";
+    } else {
+      baselineMessage = "You are currently close to your usual alignment range.";
+    }
+  }
 
   return (
     <main className="min-h-screen bg-black text-white">
@@ -316,11 +406,48 @@ export default function DashboardPage() {
 
           <div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:col-span-2">
             <div className="text-xs tracking-wide text-white/60">
+              PERSONAL BASELINE
+            </div>
+
+            {loading ? (
+              <div className="mt-2 text-sm text-white/70">Calculating baseline…</div>
+            ) : baseline !== null ? (
+              <>
+                <div className="mt-2 text-2xl font-semibold">
+                  {baseline.toFixed(1)}
+                </div>
+                <div className="mt-2 text-sm text-white/70">
+                  Current deviation:{" "}
+                  <span className="text-white">
+                    {baselineDelta !== null
+                      ? `${baselineDelta >= 0 ? "+" : ""}${baselineDelta.toFixed(1)}`
+                      : "—"}
+                  </span>
+                </div>
+                <div className="mt-2 text-sm text-white/80">{baselineMessage}</div>
+              </>
+            ) : (
+              <div className="mt-2 text-sm text-white/80">{baselineMessage}</div>
+            )}
+          </div>
+
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:col-span-2">
+            <div className="text-xs tracking-wide text-white/60">
               PATTERN INSIGHT
             </div>
 
             <div className="mt-2 text-sm text-white/80">
               {loading ? "Detecting patterns…" : patternInsight}
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:col-span-2">
+            <div className="text-xs tracking-wide text-white/60">
+              WEEKLY INSIGHT
+            </div>
+
+            <div className="mt-2 text-sm text-white/80">
+              {loading ? "Analyzing weekly signal…" : weeklyInsight}
             </div>
           </div>
 

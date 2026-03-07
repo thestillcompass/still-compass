@@ -52,7 +52,7 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen text-white">
-      <div className="min-h-screen bg-gradient-to-b from-black via-zinc-950 to-black">
+      <div className="min-h-screen bg-grid bg-gradient-to-b from-black via-zinc-950 to-black">
         {/* Top nav */}
         <header className="mx-auto flex max-w-6xl items-start justify-between px-6 py-6">
   <div className="flex flex-col">
@@ -100,7 +100,8 @@ export default function HomePage() {
         </header>
 
         {/* Hero + Cards (tightened to fit one screen better) */}
-        <section className="mx-auto max-w-6xl px-6 pb-10">
+        <section className="mx-auto max-w-6xl px-6 pb-10 relative">
+          <div className="hero-glow" />
           {/* Hero */}
           <div className="mx-auto flex min-h-[58vh] max-w-3xl flex-col items-center justify-center text-center">
             <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs text-white/70 backdrop-blur">

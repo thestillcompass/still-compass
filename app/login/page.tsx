@@ -1,13 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
 export default function LoginPage() {
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next") || "/dashboard";
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+  async function checkUser() {
+    const { data } = await supabase.auth.getUser();
+
+    if (data.user) {
+      window.location.href = next;
+    }
+  }
+
+  checkUser();
+}, [next]);
 
   async function signInWithGoogle() {
     setBusy(true);
