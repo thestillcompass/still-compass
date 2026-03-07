@@ -67,7 +67,7 @@ export default function CheckInPage() {
     if (userErr || !userData.user) {
       setBusy(false);
       setPhase("idle");
-      setStatus("You must be signed in to check in.");
+      setStatus("You must be signed in to log an alignment.");
       return;
     }
 
@@ -132,15 +132,15 @@ export default function CheckInPage() {
           >
             ← Dashboard
           </Link>
-          <div className="text-xs text-white/50">Daily Check-In</div>
+          <div className="text-xs text-white/50">Daily Alignment</div>
         </div>
 
         <h1 className="mt-10 text-3xl font-semibold tracking-tight">
-          Check in
+          Daily Alignment
         </h1>
         <p className="mt-3 text-white/70">
-          Log your signals. We’ll compute your{" "}
-          <span className="text-white/90">Compass Score</span>.
+          Log today&apos;s signals. Still Compass will compute your{" "}
+          <span className="text-white/90">Compass Score</span> and detect early drift.
         </p>
 
         <div className="mt-10 space-y-6">
@@ -189,7 +189,7 @@ export default function CheckInPage() {
             <textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="One sentence. What mattered today?"
+              placeholder="One sentence. What mattered most today?"
               className="mt-3 w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white placeholder:text-white/40 outline-none focus:border-white/25"
               rows={3}
             />
@@ -204,7 +204,7 @@ export default function CheckInPage() {
                 {compassScore.toFixed(1)}
               </div>
               <div className="mt-1 text-xs text-white/50">
-                Higher = more aligned stability
+                Higher = stronger alignment stability
               </div>
             </div>
 
@@ -219,7 +219,7 @@ export default function CheckInPage() {
                 ? "Calculating signal…"
                 : phase === "recorded"
                 ? "Alignment recorded."
-                : "Save check-in"}
+                : "Log alignment"}
             </button>
           </div>
 
