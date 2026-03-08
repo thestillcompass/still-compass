@@ -451,36 +451,34 @@ export default function DashboardPage() {
   return (
     <main className="min-h-screen bg-black text-white">
       <div className="mx-auto max-w-5xl px-6 py-16">
+        
         <div className="flex items-center justify-between">
-          <Link href="/" className="text-sm text-white/70 hover:text-white">
-            ← Home
-          </Link>
+  <Link href="/" className="text-sm text-white/70 hover:text-white">
+    ← Home
+  </Link>
 
-          <div className="flex items-center gap-3">
-  {hasCheckedInToday ? (
-    <Link
-      href="/check-in"
-      className="rounded-2xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-semibold text-white/80 hover:bg-white/10"
-    >
-      Checked in today
-    </Link>
-  ) : (
-    <Link
-      href="/check-in"
-      className="rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-black hover:bg-white/90"
-    >
-      New check-in →
-    </Link>
-  )}
+  <div className="flex items-center gap-3">
+    {hasCheckedInToday ? (
+      <div className="rounded-2xl border border-white/15 bg-white/5 px-5 py-3 text-sm text-white/70">
+        ✓ Alignment logged today
+      </div>
+    ) : (
+      <Link
+        href="/check-in"
+        className="rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-black hover:bg-white/90"
+      >
+        New check-in →
+      </Link>
+    )}
 
-  <button
-    onClick={signOut}
-    className="rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-sm text-white/80 hover:bg-white/10"
-  >
-    Sign out
-  </button>
+    <button
+      onClick={signOut}
+      className="rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-sm text-white/80 hover:bg-white/10"
+    >
+      Sign out
+    </button>
+  </div>
 </div>
-        </div>
 
         <div className="mt-10">
           <p className="text-sm text-white/50">{todayLabel}</p>
