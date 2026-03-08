@@ -20,6 +20,7 @@ type Entry = {
   context: string;
   note: string | null;
   created_at: string;
+  entry_date: string;
 };
 
 function detectPatternInsight(entries: Entry[]) {
@@ -237,6 +238,7 @@ export default function DashboardPage() {
   const [latest, setLatest] = useState<Entry | null>(null);
   const [recentEntries, setRecentEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasCheckedInToday, setHasCheckedInToday] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -257,18 +259,26 @@ export default function DashboardPage() {
       setName(displayName ?? null);
 
       const { data, error } = await supabase
-        .from("entries")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(30);
+  .from("entries")
+  .select("*")
+  .eq("user_id", userData.user?.id)
+  .order("created_at", { ascending: false })
+  .limit(30);
 
       if (!mounted) return;
 
       if (!error && data) {
-        const entries = data as Entry[];
-        setRecentEntries(entries);
-        setLatest(entries[0] ?? null);
-      }
+  const entries = data as Entry[];
+  setRecentEntries(entries);
+
+  const latestEntry = entries[0] ?? null;
+  setLatest(latestEntry);
+
+  const today = new Date().toISOString().split("T")[0];
+  const checkedToday = entries.some((entry) => entry.entry_date === today);
+
+  setHasCheckedInToday(checkedToday);
+}
 
       setLoading(false);
     }
@@ -447,20 +457,29 @@ export default function DashboardPage() {
           </Link>
 
           <div className="flex items-center gap-3">
-            <Link
-              href="/check-in"
-              className="rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-black hover:bg-white/90"
-            >
-              New check-in →
-            </Link>
+  {hasCheckedInToday ? (
+    <Link
+      href="/check-in"
+      className="rounded-2xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-semibold text-white/80 hover:bg-white/10"
+    >
+      Checked in today
+    </Link>
+  ) : (
+    <Link
+      href="/check-in"
+      className="rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-black hover:bg-white/90"
+    >
+      New check-in →
+    </Link>
+  )}
 
-            <button
-              onClick={signOut}
-              className="rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-sm text-white/80 hover:bg-white/10"
-            >
-              Sign out
-            </button>
-          </div>
+  <button
+    onClick={signOut}
+    className="rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-sm text-white/80 hover:bg-white/10"
+  >
+    Sign out
+  </button>
+</div>
         </div>
 
         <div className="mt-10">
@@ -468,7 +487,11 @@ export default function DashboardPage() {
           <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
             Welcome back, {welcomeName}.
           </h1>
-          <p className="mt-2 text-white/65">Alignment check for today.</p>
+          <p className="mt-2 text-white/65">
+  {hasCheckedInToday
+    ? "Today’s alignment is logged. Review your signal and return tomorrow."
+    : "Alignment check for today."}
+</p>
         </div>
 
         {showDriftAlert && (
@@ -493,7 +516,7 @@ export default function DashboardPage() {
           </div>
 
           <div className={`mt-3 text-6xl font-semibold tracking-tight ${scoreColor}`}>
-            {loading ? "…" : score ?? "—"}
+          {loading ? "…" : score !== null && score !== undefined ? score.toFixed(1) : "—"}
           </div>
 
           <div className="mt-3 text-sm text-white/70">

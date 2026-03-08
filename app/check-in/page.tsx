@@ -36,13 +36,12 @@ export default function CheckInPage() {
 
       const today = new Date().toISOString().split("T")[0];
 
-      const { data } = await supabase
-        .from("entries")
-        .select("id")
-        .eq("user_id", userData.user.id)
-        .gte("created_at", `${today}T00:00:00`)
-        .lte("created_at", `${today}T23:59:59`)
-        .limit(1);
+const { data } = await supabase
+  .from("entries")
+  .select("id")
+  .eq("user_id", userData.user.id)
+  .eq("entry_date", today)
+  .limit(1);
 
       if (data && data.length > 0) {
         setAlreadyCheckedToday(true);
@@ -71,21 +70,31 @@ export default function CheckInPage() {
       return;
     }
 
-    const { error } = await supabase.from("entries").insert({
-      user_id: userData.user.id,
-      emotional_signal: emotionalSignal,
-      vital_energy: vitalEnergy,
-      cognitive_load: cognitiveLoad,
-      context,
-      note: note.trim() ? note.trim() : null,
-    });
+    const today = new Date().toISOString().split("T")[0];
 
-    if (error) {
-      setBusy(false);
-      setPhase("idle");
-      setStatus(error.message);
-      return;
-    }
+const { error } = await supabase.from("entries").insert({
+  user_id: userData.user.id,
+  emotional_signal: emotionalSignal,
+  vital_energy: vitalEnergy,
+  cognitive_load: cognitiveLoad,
+  context,
+  note: note.trim() ? note.trim() : null,
+  entry_date: today,
+});
+
+if (error) {
+  setBusy(false);
+  setPhase("idle");
+
+  if (error.message.toLowerCase().includes("duplicate")) {
+    setAlreadyCheckedToday(true);
+    setStatus("You have already logged today’s alignment.");
+  } else {
+    setStatus(error.message);
+  }
+
+  return;
+}
 
     setPhase("calculating");
 
