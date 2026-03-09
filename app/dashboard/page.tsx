@@ -309,7 +309,11 @@ export default function DashboardPage() {
     });
 
   const drift = score ? computeDriftStatus(score) : null;
-  const adjustment = score ? microAdjustment(score) : null;
+  const signalDriver = useMemo(() => detectSignalDriver(latest), [latest]);
+  
+  const adjustment = score
+  ? microAdjustment(score, signalDriver)
+  : null;
 
   let interpretation: string | null = null;
 
@@ -409,7 +413,7 @@ export default function DashboardPage() {
 
   const patternInsight = useMemo(() => detectPatternInsight(recentEntries), [recentEntries]);
   const weeklyInsight = useMemo(() => detectWeeklyInsight(recentEntries), [recentEntries]);
-  const signalDriver = useMemo(() => detectSignalDriver(latest), [latest]);
+
   const contextInsight = useMemo(() => detectContextInsight(recentEntries), [recentEntries]);
   const noteInsight = useMemo(() => detectNoteInsight(recentEntries), [recentEntries]);
 

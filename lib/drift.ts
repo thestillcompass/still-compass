@@ -19,14 +19,33 @@ export function computeDriftStatus(score: number) {
   };
 }
 
-export function microAdjustment(score: number) {
+export function microAdjustment(
+  score: number,
+  driver: string | null
+) {
+  if (!driver) {
+    return "Maintain a steady rhythm today. No dominant adjustment needed.";
+  }
+
+  if (driver.includes("Cognitive Load")) {
+    return "Cognitive load appears elevated. Reduce decision surface and defer non-essential choices.";
+  }
+
+  if (driver.includes("Vital Energy")) {
+    return "Vital energy appears to be the limiting factor. Prioritize recovery and avoid heavy cognitive work.";
+  }
+
+  if (driver.includes("Emotional Signal")) {
+    return "Emotional drag may be affecting alignment. Step away from the current context and reset attention.";
+  }
+
   if (score >= 8.5) {
-    return "Protect today's focus block. Avoid unnecessary context switching.";
+    return "Signals indicate strong alignment. Maintain the current rhythm and avoid unnecessary disruptions.";
   }
 
   if (score >= 7) {
-    return "Reduce decision load. Choose one priority and defer the rest.";
+    return "Mild drift detected. A small reduction in cognitive load may restore clarity.";
   }
 
-  return "Pause escalation. Take a 15 minute reset before making major decisions.";
+  return "Signals indicate overload. Reduce active decisions and create recovery space.";
 }
