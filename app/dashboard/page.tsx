@@ -11,6 +11,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { computeCompassScore } from "@/lib/compass";
 import { computeDriftStatus, microAdjustment } from "@/lib/drift";
+import { AlignmentReportCard } from "@/components/dashboard/alignment-report-card";
 
 type Entry = {
   id: string;
@@ -513,12 +514,48 @@ function generateAlignmentReport(entries: Entry[]) {
   };
 }
 export default function DashboardPage() {
+
   const [email, setEmail] = useState<string | null>(null);
   const [name, setName] = useState<string | null>(null);
   const [latest, setLatest] = useState<Entry | null>(null);
   const [recentEntries, setRecentEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasCheckedInToday, setHasCheckedInToday] = useState(false);
+
+  const testReport = {
+    score: 78,
+    previousAverageScore: 72,
+    trendDelta: 6,
+    status: "steady" as const,
+    topPositiveSignal: "Your consistency improves when mornings are structured.",
+    topRisk: "Energy dips later in the day tend to trigger drift.",
+    recommendedAction: "Complete tomorrow’s check-in before 10 AM.",
+    summary: "You are currently steady and trending upward.",
+    generatedAt: new Date().toISOString(),
+  };
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function load() {
+      setLoading(true);
+
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (!mounted) return;
+
+      if (userError || !userData.user) {
+        setLoading(false);
+        window.location.href = "/login";
+        return;
+      }
+    }
+
+    load();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -654,69 +691,59 @@ const { data, error } = await supabase
   const showDriftAlert = scoreDrop !== null && scoreDrop >= 1.2;
 
   const todayLabel = useMemo(() => {
-    return new Date().toLocaleDateString("en-US", {
-      weekday: "long",
-      month: "long",
-      day: "numeric",
-    });
-  }, []);
+  return new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+}, []);
 
-  const welcomeName = name || email || "there";
+const welcomeName = name || email || "there";
 
-  const rhythmDays = useMemo(() => {
-    if (recentEntries.length === 0) return 0;
+const rhythmDays = useMemo(() => {
+  if (recentEntries.length === 0) return 0;
 
-    const streakInsight = useMemo(
-  () => detectStreakInsight(rhythmDays),
-  [rhythmDays]
-);
-
-    const uniqueDays = Array.from(
-      new Set(
-        recentEntries.map((entry) =>
-          new Date(entry.created_at).toISOString().split("T")[0]
-        )
+  const uniqueDays = Array.from(
+    new Set(
+      recentEntries.map((entry) =>
+        new Date(entry.created_at).toISOString().split("T")[0]
       )
-    ).sort((a, b) => (a < b ? 1 : -1));
+    )
+  ).sort((a, b) => (a < b ? 1 : -1));
 
-    if (uniqueDays.length === 0) return 0;
+  if (uniqueDays.length === 0) return 0;
 
-    let streak = 1;
+  let streak = 1;
 
-    for (let i = 1; i < uniqueDays.length; i++) {
-      const current = new Date(uniqueDays[i - 1]);
-      const next = new Date(uniqueDays[i]);
+  for (let i = 1; i < uniqueDays.length; i++) {
+    const current = new Date(uniqueDays[i - 1]);
+    const next = new Date(uniqueDays[i]);
 
-      current.setDate(current.getDate() - 1);
+    current.setDate(current.getDate() - 1);
 
-      const expected = current.toISOString().split("T")[0];
-      const nextDate = next.toISOString().split("T")[0];
+    const expected = current.toISOString().split("T")[0];
+    const nextDate = next.toISOString().split("T")[0];
 
-      if (nextDate === expected) {
-        streak++;
-      } else {
-        break;
-      }
+    if (nextDate === expected) {
+      streak++;
+    } else {
+      break;
     }
+  }
 
-    return streak;
-  }, [recentEntries]);
+  return streak;
+}, [recentEntries]);
 
-  const streakInsight = useMemo(
-  () => detectStreakInsight(rhythmDays),
-  [rhythmDays]
-);
-  
+const streakInsight = useMemo(() => detectStreakInsight(rhythmDays), [rhythmDays]);
 
-  const patternInsight = useMemo(() => detectPatternInsight(recentEntries), [recentEntries]);
-  const weeklyInsight = useMemo(() => detectWeeklyInsight(recentEntries), [recentEntries]);
-
-  const contextInsight = useMemo(() => detectContextInsight(recentEntries), [recentEntries]);
-  const noteInsight = useMemo(() => detectNoteInsight(recentEntries), [recentEntries]);
-  const insightMemory = useMemo(() => detectInsightMemory(recentEntries), [recentEntries]);
-  const driftPrediction = useMemo(() => detectDriftPrediction(recentEntries), [recentEntries]);
-  const weeklyReview = useMemo(() => detectWeeklyReview(recentEntries), [recentEntries]);
-  const alignmentReport = useMemo(() => generateAlignmentReport(recentEntries), [recentEntries]);
+const patternInsight = useMemo(() => detectPatternInsight(recentEntries), [recentEntries]);
+const weeklyInsight = useMemo(() => detectWeeklyInsight(recentEntries), [recentEntries]);
+const contextInsight = useMemo(() => detectContextInsight(recentEntries), [recentEntries]);
+const noteInsight = useMemo(() => detectNoteInsight(recentEntries), [recentEntries]);
+const insightMemory = useMemo(() => detectInsightMemory(recentEntries), [recentEntries]);
+const driftPrediction = useMemo(() => detectDriftPrediction(recentEntries), [recentEntries]);
+const weeklyReview = useMemo(() => detectWeeklyReview(recentEntries), [recentEntries]);
+const alignmentReport = useMemo(() => generateAlignmentReport(recentEntries), [recentEntries]);
 
   
 
@@ -787,16 +814,24 @@ const { data, error } = await supabase
   </div>
 </div>
 
-        <div className="mt-10">
+                <div className="mt-10">
           <p className="text-sm text-white/50">{todayLabel}</p>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
             Welcome back, {welcomeName}.
           </h1>
           <p className="mt-2 text-white/65">
-  {hasCheckedInToday
-    ? "Today’s alignment is logged. Review your signal and return tomorrow."
-    : "Alignment check for today."}
-</p>
+            {hasCheckedInToday
+              ? "Today’s alignment is logged. Review your signal and return tomorrow."
+              : "Alignment check for today."}
+          </p>
+        </div>
+
+                <div className="mt-8">
+          <AlignmentReportCard report={testReport} />
+        </div>
+
+        <div className="mt-8">
+          <AlignmentReportCard report={testReport} />
         </div>
 
         {showDriftAlert && (
