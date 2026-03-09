@@ -421,6 +421,97 @@ function detectStreakInsight(streak: number) {
 
   return "Your alignment rhythm is now strongly established.";
 }
+
+function generateAlignmentReport(entries: Entry[]) {
+  if (entries.length < 5) {
+    return {
+      score: null,
+      trend: "Not enough data yet",
+      primaryDrag: "Not enough data yet",
+      strongestContext: "Not enough data yet",
+      riskContext: "Not enough data yet",
+    };
+  }
+
+  const recent = [...entries].slice(0, 7);
+
+  const scores = recent.map((entry) =>
+    computeCompassScore({
+      emotional_signal: entry.emotional_signal,
+      vital_energy: entry.vital_energy,
+      cognitive_load: entry.cognitive_load,
+    })
+  );
+
+  const averageScore =
+    scores.reduce((sum, value) => sum + value, 0) / scores.length;
+
+  const firstScore = scores[scores.length - 1];
+  const lastScore = scores[0];
+
+  let trend = "Stable";
+  if (lastScore - firstScore >= 0.8) {
+    trend = "Improving";
+  } else if (firstScore - lastScore >= 0.8) {
+    trend = "Declining";
+  }
+
+  const emotionalAvg =
+    recent.reduce((sum, e) => sum + e.emotional_signal, 0) / recent.length;
+  const energyAvg =
+    recent.reduce((sum, e) => sum + e.vital_energy, 0) / recent.length;
+  const loadAvg =
+    recent.reduce((sum, e) => sum + e.cognitive_load, 0) / recent.length;
+
+  const emotionalDrag = 10 - emotionalAvg;
+  const energyDrag = 10 - energyAvg;
+  const loadDrag = loadAvg;
+
+  let primaryDrag = "Balanced";
+  const maxDrag = Math.max(emotionalDrag, energyDrag, loadDrag);
+
+  if (maxDrag === loadDrag) {
+    primaryDrag = "Cognitive Load";
+  } else if (maxDrag === energyDrag) {
+    primaryDrag = "Vital Energy";
+  } else if (maxDrag === emotionalDrag) {
+    primaryDrag = "Emotional Signal";
+  }
+
+  const grouped: Record<string, number[]> = {};
+
+  for (const entry of recent) {
+    const score = computeCompassScore({
+      emotional_signal: entry.emotional_signal,
+      vital_energy: entry.vital_energy,
+      cognitive_load: entry.cognitive_load,
+    });
+
+    if (!grouped[entry.context]) {
+      grouped[entry.context] = [];
+    }
+
+    grouped[entry.context].push(score);
+  }
+
+  const contexts = Object.entries(grouped).map(([context, values]) => ({
+    context,
+    average: values.reduce((sum, value) => sum + value, 0) / values.length,
+  }));
+
+  contexts.sort((a, b) => a.average - b.average);
+
+  const riskContext = contexts[0]?.context ?? "Unknown";
+  const strongestContext = contexts[contexts.length - 1]?.context ?? "Unknown";
+
+  return {
+    score: averageScore,
+    trend,
+    primaryDrag,
+    strongestContext,
+    riskContext,
+  };
+}
 export default function DashboardPage() {
   const [email, setEmail] = useState<string | null>(null);
   const [name, setName] = useState<string | null>(null);
@@ -625,6 +716,7 @@ const { data, error } = await supabase
   const insightMemory = useMemo(() => detectInsightMemory(recentEntries), [recentEntries]);
   const driftPrediction = useMemo(() => detectDriftPrediction(recentEntries), [recentEntries]);
   const weeklyReview = useMemo(() => detectWeeklyReview(recentEntries), [recentEntries]);
+  const alignmentReport = useMemo(() => generateAlignmentReport(recentEntries), [recentEntries]);
 
   
 
@@ -762,6 +854,47 @@ const { data, error } = await supabase
             {adjustment ?? "Log a check-in to receive guidance."}
           </div>
         </div>
+
+        <div className="mt-6 rounded-3xl border border-white/10 bg-white/5 p-6">
+  <div className="text-xs tracking-wide text-white/60">ALIGNMENT REPORT</div>
+
+  <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+    <div>
+      <div className="text-xs text-white/50">Avg Score</div>
+      <div className="mt-1 text-lg font-semibold text-white">
+        {alignmentReport.score !== null ? alignmentReport.score.toFixed(1) : "—"}
+      </div>
+    </div>
+
+    <div>
+      <div className="text-xs text-white/50">Trend</div>
+      <div className="mt-1 text-lg font-semibold text-white">
+        {alignmentReport.trend}
+      </div>
+    </div>
+
+    <div>
+      <div className="text-xs text-white/50">Primary Drag</div>
+      <div className="mt-1 text-lg font-semibold text-white">
+        {alignmentReport.primaryDrag}
+      </div>
+    </div>
+
+    <div>
+      <div className="text-xs text-white/50">Strongest Context</div>
+      <div className="mt-1 text-lg font-semibold text-white">
+        {alignmentReport.strongestContext}
+      </div>
+    </div>
+
+    <div>
+      <div className="text-xs text-white/50">Risk Context</div>
+      <div className="mt-1 text-lg font-semibold text-white">
+        {alignmentReport.riskContext}
+      </div>
+    </div>
+  </div>
+</div>
 
         {/* Intelligence layer */}
         <div className="mt-10">
