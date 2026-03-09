@@ -286,6 +286,65 @@ function detectInsightMemory(entries: Entry[]) {
 
   return "No strong repeating pattern is visible yet across your recent alignments.";
 }
+
+function detectDriftPrediction(entries: Entry[]) {
+  if (entries.length < 4) {
+    return "Not enough recent data yet to estimate near-term drift risk.";
+  }
+
+  const recent = [...entries].slice(0, 5).reverse();
+
+  const scores = recent.map((entry) =>
+    computeCompassScore({
+      emotional_signal: entry.emotional_signal,
+      vital_energy: entry.vital_energy,
+      cognitive_load: entry.cognitive_load,
+    })
+  );
+
+  const loads = recent.map((entry) => entry.cognitive_load);
+  const energy = recent.map((entry) => entry.vital_energy);
+
+  const lastScore = scores[scores.length - 1];
+  const firstScore = scores[0];
+  const scoreDelta = lastScore - firstScore;
+
+  const avgLoad =
+    loads.reduce((sum, value) => sum + value, 0) / loads.length;
+
+  const avgEnergy =
+    energy.reduce((sum, value) => sum + value, 0) / energy.length;
+
+  const risingLoad =
+    loads.length >= 3 &&
+    loads[loads.length - 3] <= loads[loads.length - 2] &&
+    loads[loads.length - 2] <= loads[loads.length - 1];
+
+  const fallingEnergy =
+    energy.length >= 3 &&
+    energy[energy.length - 3] >= energy[energy.length - 2] &&
+    energy[energy.length - 2] >= energy[energy.length - 1];
+
+  const lowAlignmentDays = scores.filter((score) => score < 7).length;
+
+  if (risingLoad && avgLoad >= 6.5) {
+    return "Drift risk is rising if cognitive load remains elevated over the next day.";
+  }
+
+  if (fallingEnergy && avgEnergy <= 6) {
+    return "Drift risk is increasing as vital energy trends downward.";
+  }
+
+  if (scoreDelta <= -1 && lowAlignmentDays >= 3) {
+    return "Recent signals suggest alignment may weaken further without recovery space.";
+  }
+
+  if (avgLoad >= 7 && avgEnergy <= 5.5) {
+    return "Your current signal mix suggests a high probability of near-term drift.";
+  }
+
+  return "No strong near-term drift risk is visible yet from your recent signals.";
+}
 export default function DashboardPage() {
   const [email, setEmail] = useState<string | null>(null);
   const [name, setName] = useState<string | null>(null);
@@ -472,6 +531,7 @@ export default function DashboardPage() {
   const contextInsight = useMemo(() => detectContextInsight(recentEntries), [recentEntries]);
   const noteInsight = useMemo(() => detectNoteInsight(recentEntries), [recentEntries]);
   const insightMemory = useMemo(() => detectInsightMemory(recentEntries), [recentEntries]);
+  const driftPrediction = useMemo(() => detectDriftPrediction(recentEntries), [recentEntries]);
 
   
 
@@ -620,6 +680,13 @@ export default function DashboardPage() {
                 {loading ? "Identifying dominant driver…" : signalDriver}
               </div>
             </div>
+
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:col-span-2">
+  <div className="text-xs tracking-wide text-white/60">DRIFT PREDICTION</div>
+  <div className="mt-2 text-sm text-white/80">
+    {loading ? "Estimating drift risk..." : driftPrediction}
+  </div>
+</div>
 
             <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
               <div className="text-xs tracking-wide text-white/60">CONTEXT INSIGHT</div>
