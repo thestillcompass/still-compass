@@ -435,22 +435,28 @@ export default function DashboardPage() {
     async function load() {
       setLoading(true);
 
-      const { data: userData } = await supabase.auth.getUser();
-      if (!mounted) return;
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+if (!mounted) return;
 
-      setEmail(userData.user?.email ?? null);
+if (userError || !userData.user) {
+  setLoading(false);
+  window.location.href = "/login";
+  return;
+}
 
-      const displayName =
-        (userData.user?.user_metadata?.full_name as string | undefined) ||
-        (userData.user?.user_metadata?.name as string | undefined) ||
-        null;
+setEmail(userData.user.email ?? null);
 
-      setName(displayName ?? null);
+const displayName =
+  (userData.user.user_metadata?.full_name as string | undefined) ||
+  (userData.user.user_metadata?.name as string | undefined) ||
+  null;
 
-      const { data, error } = await supabase
+setName(displayName ?? null);
+
+const { data, error } = await supabase
   .from("entries")
   .select("*")
-  .eq("user_id", userData.user?.id)
+  .eq("user_id", userData.user.id)
   .order("created_at", { ascending: false })
   .limit(30);
 
