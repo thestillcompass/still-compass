@@ -397,6 +397,30 @@ function detectWeeklyReview(entries: Entry[]) {
 
   return "Your alignment weakened this week. Recovery rhythm may need attention.";
 }
+
+function detectStreakInsight(streak: number) {
+  if (streak === 0) {
+    return "Start your alignment rhythm today.";
+  }
+
+  if (streak === 1) {
+    return "Your alignment rhythm has begun.";
+  }
+
+  if (streak <= 3) {
+    return "Your streak is building momentum.";
+  }
+
+  if (streak <= 7) {
+    return "Consistency is emerging. This rhythm strengthens signal accuracy.";
+  }
+
+  if (streak <= 14) {
+    return "Your alignment rhythm is stabilizing.";
+  }
+
+  return "Your alignment rhythm is now strongly established.";
+}
 export default function DashboardPage() {
   const [email, setEmail] = useState<string | null>(null);
   const [name, setName] = useState<string | null>(null);
@@ -545,6 +569,11 @@ export default function DashboardPage() {
   const rhythmDays = useMemo(() => {
     if (recentEntries.length === 0) return 0;
 
+    const streakInsight = useMemo(
+  () => detectStreakInsight(rhythmDays),
+  [rhythmDays]
+);
+
     const uniqueDays = Array.from(
       new Set(
         recentEntries.map((entry) =>
@@ -575,6 +604,11 @@ export default function DashboardPage() {
 
     return streak;
   }, [recentEntries]);
+
+  const streakInsight = useMemo(
+  () => detectStreakInsight(rhythmDays),
+  [rhythmDays]
+);
   
 
   const patternInsight = useMemo(() => detectPatternInsight(recentEntries), [recentEntries]);
@@ -814,6 +848,10 @@ export default function DashboardPage() {
                   ? "1 consecutive day"
                   : `${rhythmDays} consecutive days`}
               </div>
+
+              <div className="mt-2 text-sm text-white/80">
+  {loading ? "Analyzing rhythm…" : streakInsight}
+</div>
             </div>
 
             <div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:col-span-2">
