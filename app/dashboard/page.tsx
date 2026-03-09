@@ -232,6 +232,60 @@ function detectNoteInsight(entries: Entry[]) {
   return messages[topBucket] ?? "A repeated written theme is emerging in your recent reflections.";
 }
 
+function detectInsightMemory(entries: Entry[]) {
+  if (entries.length < 5) {
+    return "Not enough recent data yet to identify a repeating pattern.";
+  }
+
+  const recent = [...entries].slice(0, 7);
+
+  let highLoadCount = 0;
+  let lowEnergyCount = 0;
+  let lowAlignmentCount = 0;
+  let workLowAlignmentCount = 0;
+
+  for (const entry of recent) {
+    const score = computeCompassScore({
+      emotional_signal: entry.emotional_signal,
+      vital_energy: entry.vital_energy,
+      cognitive_load: entry.cognitive_load,
+    });
+
+    if (entry.cognitive_load >= 7) {
+      highLoadCount++;
+    }
+
+    if (entry.vital_energy <= 5) {
+      lowEnergyCount++;
+    }
+
+    if (score < 7) {
+      lowAlignmentCount++;
+    }
+
+    if (entry.context === "Work" && score < 7) {
+      workLowAlignmentCount++;
+    }
+  }
+
+  if (workLowAlignmentCount >= 3) {
+    return "Work-related drift has appeared repeatedly in your recent alignments.";
+  }
+
+  if (highLoadCount >= 4) {
+    return "High cognitive load has shown up repeatedly across your recent check-ins.";
+  }
+
+  if (lowEnergyCount >= 4) {
+    return "Low vital energy has been a recurring pattern in your recent alignments.";
+  }
+
+  if (lowAlignmentCount >= 4) {
+    return "Lower-alignment days are repeating recently. Recovery rhythm may need attention.";
+  }
+
+  return "No strong repeating pattern is visible yet across your recent alignments.";
+}
 export default function DashboardPage() {
   const [email, setEmail] = useState<string | null>(null);
   const [name, setName] = useState<string | null>(null);
@@ -310,7 +364,7 @@ export default function DashboardPage() {
 
   const drift = score ? computeDriftStatus(score) : null;
   const signalDriver = useMemo(() => detectSignalDriver(latest), [latest]);
-  
+
   const adjustment = score
   ? microAdjustment(score, signalDriver)
   : null;
@@ -410,12 +464,15 @@ export default function DashboardPage() {
 
     return streak;
   }, [recentEntries]);
+  
 
   const patternInsight = useMemo(() => detectPatternInsight(recentEntries), [recentEntries]);
   const weeklyInsight = useMemo(() => detectWeeklyInsight(recentEntries), [recentEntries]);
 
   const contextInsight = useMemo(() => detectContextInsight(recentEntries), [recentEntries]);
   const noteInsight = useMemo(() => detectNoteInsight(recentEntries), [recentEntries]);
+
+  
 
   const baselineScores = useMemo(() => {
     return [...recentEntries]
