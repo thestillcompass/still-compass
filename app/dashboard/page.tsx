@@ -471,6 +471,7 @@ export default function DashboardPage() {
 
   const contextInsight = useMemo(() => detectContextInsight(recentEntries), [recentEntries]);
   const noteInsight = useMemo(() => detectNoteInsight(recentEntries), [recentEntries]);
+  const insightMemory = useMemo(() => detectInsightMemory(recentEntries), [recentEntries]);
 
   
 
@@ -640,6 +641,12 @@ export default function DashboardPage() {
                 {loading ? "Analyzing weekly signal…" : weeklyInsight}
               </div>
             </div>
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:col-span-2">
+              <div className="text-xs tracking-wide text-white/60">INSIGHT MEMORY</div>
+              <div className="mt-2 text-sm text-white/80">
+              {loading ? "Reviewing repeating patterns..." : insightMemory}
+          </div>
+        </div>
           </div>
         </div>
 
