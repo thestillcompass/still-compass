@@ -345,6 +345,58 @@ function detectDriftPrediction(entries: Entry[]) {
 
   return "No strong near-term drift risk is visible yet from your recent signals.";
 }
+
+function detectWeeklyReview(entries: Entry[]) {
+  if (entries.length < 5) {
+    return "Complete more daily alignments to unlock your weekly review.";
+  }
+
+  const recent = [...entries].slice(0, 7);
+
+  const scores = recent.map((entry) =>
+    computeCompassScore({
+      emotional_signal: entry.emotional_signal,
+      vital_energy: entry.vital_energy,
+      cognitive_load: entry.cognitive_load,
+    })
+  );
+
+  const avgScore =
+    scores.reduce((sum, value) => sum + value, 0) / scores.length;
+
+  const emotionalAvg =
+    recent.reduce((sum, e) => sum + e.emotional_signal, 0) / recent.length;
+
+  const energyAvg =
+    recent.reduce((sum, e) => sum + e.vital_energy, 0) / recent.length;
+
+  const loadAvg =
+    recent.reduce((sum, e) => sum + e.cognitive_load, 0) / recent.length;
+
+  const drag = Math.max(10 - emotionalAvg, 10 - energyAvg, loadAvg);
+
+  if (drag === loadAvg && loadAvg >= 6) {
+    return "This week, cognitive load appears to have been the dominant drag on alignment.";
+  }
+
+  if (drag === 10 - energyAvg && energyAvg <= 6) {
+    return "Lower vital energy appears to have influenced your alignment this week.";
+  }
+
+  if (drag === 10 - emotionalAvg && emotionalAvg <= 6) {
+    return "Emotional signal softness appears to have influenced your alignment this week.";
+  }
+
+  if (avgScore >= 8) {
+    return "Your alignment remained strong throughout the week.";
+  }
+
+  if (avgScore >= 7) {
+    return "Your signals suggest mild drift this week, but overall stability remains.";
+  }
+
+  return "Your alignment weakened this week. Recovery rhythm may need attention.";
+}
 export default function DashboardPage() {
   const [email, setEmail] = useState<string | null>(null);
   const [name, setName] = useState<string | null>(null);
@@ -532,6 +584,7 @@ export default function DashboardPage() {
   const noteInsight = useMemo(() => detectNoteInsight(recentEntries), [recentEntries]);
   const insightMemory = useMemo(() => detectInsightMemory(recentEntries), [recentEntries]);
   const driftPrediction = useMemo(() => detectDriftPrediction(recentEntries), [recentEntries]);
+  const weeklyReview = useMemo(() => detectWeeklyReview(recentEntries), [recentEntries]);
 
   
 
@@ -685,6 +738,13 @@ export default function DashboardPage() {
   <div className="text-xs tracking-wide text-white/60">DRIFT PREDICTION</div>
   <div className="mt-2 text-sm text-white/80">
     {loading ? "Estimating drift risk..." : driftPrediction}
+  </div>
+</div>
+
+<div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:col-span-2">
+  <div className="text-xs tracking-wide text-white/60">WEEKLY REVIEW</div>
+  <div className="mt-2 text-sm text-white/80">
+    {loading ? "Compiling weekly review..." : weeklyReview}
   </div>
 </div>
 
