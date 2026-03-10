@@ -680,12 +680,16 @@ const { data, error } = await supabase
 
   const showDriftAlert = scoreDrop !== null && scoreDrop >= 1.2;
 
-  const todayLabel = useMemo(() => {
-  return new Date().toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  });
+  const [todayLabel, setTodayLabel] = useState("");
+
+useEffect(() => {
+  setTodayLabel(
+    new Date().toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+    })
+  );
 }, []);
 
 const welcomeName = name || email || "there";
@@ -861,7 +865,9 @@ const alignmentCardReport = useMemo(() => {
 </div>
 
                 <div className="mt-10">
-          <p className="text-sm text-white/50">{todayLabel}</p>
+          <p className="text-sm text-white/50">
+  {todayLabel || "Loading date..."}
+</p>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
             Welcome back, {welcomeName}.
           </h1>
@@ -884,7 +890,7 @@ const alignmentCardReport = useMemo(() => {
       topRisk: "Live report data is not available yet.",
       recommendedAction: "Check dashboard data loading in production.",
       summary: "Fallback summary",
-      generatedAt: new Date().toISOString(),
+      generatedAt: "static-fallback",
     }
   }
 />
@@ -1050,11 +1056,11 @@ const alignmentCardReport = useMemo(() => {
             <div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:col-span-2">
               <div className="text-xs tracking-wide text-white/60">7-DAY TREND</div>
 
-              <div className="mt-4 h-40">
+              <div className="mt-4 h-40 min-w-0">
                 {loading ? (
                   <div className="text-white/60">Loading trend…</div>
                 ) : chartData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                     <LineChart data={chartData}>
                       <Tooltip
                         contentStyle={{
