@@ -15,27 +15,27 @@ function getStatusStyles(status: AlignmentReport["status"]) {
     case "steady":
       return {
         label: "Steady",
-        pill: "bg-green-100 text-green-800 border-green-200",
+        pill: "border-green-400/20 bg-green-400/10 text-green-300",
       };
     case "realigning":
       return {
         label: "Realigning",
-        pill: "bg-blue-100 text-blue-800 border-blue-200",
+        pill: "border-blue-400/20 bg-blue-400/10 text-blue-300",
       };
     case "slight_drift":
       return {
         label: "Slight Drift",
-        pill: "bg-amber-100 text-amber-800 border-amber-200",
+        pill: "border-amber-400/20 bg-amber-400/10 text-amber-300",
       };
     case "off_course":
       return {
         label: "Off Course",
-        pill: "bg-red-100 text-red-800 border-red-200",
+        pill: "border-red-400/20 bg-red-400/10 text-red-300",
       };
     default:
       return {
         label: "Unknown",
-        pill: "bg-neutral-100 text-neutral-800 border-neutral-200",
+        pill: "border-white/10 bg-white/5 text-white/70",
       };
   }
 }
@@ -47,16 +47,12 @@ export function AlignmentReportCard({
 }) {
   if (!report) {
     return (
-      <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
+      <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
         <div className="mb-2">
-          <h3 className="text-lg font-semibold text-neutral-900">
-            Alignment Report
-          </h3>
-          <p className="text-sm text-neutral-500">
-            Your latest pattern-based summary
-          </p>
+          <h3 className="text-lg font-semibold text-white">Alignment Report</h3>
+          <p className="text-sm text-white/50">Your latest pattern-based summary</p>
         </div>
-        <p className="text-sm text-neutral-600">
+        <p className="text-sm text-white/70">
           Complete more check-ins to generate your first alignment report.
         </p>
       </div>
@@ -66,15 +62,11 @@ export function AlignmentReportCard({
   const status = getStatusStyles(report.status);
 
   return (
-    <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
+    <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
       <div className="mb-5 flex items-start justify-between gap-4">
         <div>
-          <h3 className="text-lg font-semibold text-neutral-900">
-            Alignment Report
-          </h3>
-          <p className="text-sm text-neutral-500">
-            Your latest pattern-based summary
-          </p>
+          <h3 className="text-lg font-semibold text-white">Alignment Report</h3>
+          <p className="text-sm text-white/50">Your latest pattern-based summary</p>
         </div>
 
         <span
@@ -85,36 +77,26 @@ export function AlignmentReportCard({
       </div>
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="rounded-xl bg-neutral-50 p-4">
-          <p className="text-xs uppercase tracking-wide text-neutral-500">
-            Compass Score
-          </p>
-          <p className="mt-2 text-3xl font-bold text-neutral-900">
-            {report.score}
-          </p>
+        <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+          <p className="text-xs uppercase tracking-wide text-white/50">Compass Score</p>
+          <p className="mt-2 text-3xl font-bold text-white">{report.score}</p>
         </div>
 
-        <div className="rounded-xl bg-neutral-50 p-4">
-          <p className="text-xs uppercase tracking-wide text-neutral-500">
-            Trend
-          </p>
-          <p className="mt-2 text-3xl font-bold text-neutral-900">
+        <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+          <p className="text-xs uppercase tracking-wide text-white/50">Trend</p>
+          <p className="mt-2 text-3xl font-bold text-white">
             {report.trendDelta === null
               ? "—"
               : report.trendDelta > 0
               ? `+${report.trendDelta}`
               : report.trendDelta}
           </p>
-          <p className="mt-1 text-sm text-neutral-500">
-            vs previous 7-day average
-          </p>
+          <p className="mt-1 text-sm text-white/50">vs previous 7-day average</p>
         </div>
 
-        <div className="rounded-xl bg-neutral-50 p-4">
-          <p className="text-xs uppercase tracking-wide text-neutral-500">
-            Previous Avg
-          </p>
-          <p className="mt-2 text-3xl font-bold text-neutral-900">
+        <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+          <p className="text-xs uppercase tracking-wide text-white/50">Previous Avg</p>
+          <p className="mt-2 text-3xl font-bold text-white">
             {report.previousAverageScore ?? "—"}
           </p>
         </div>
@@ -122,24 +104,22 @@ export function AlignmentReportCard({
 
       <div className="space-y-4">
         <div>
-          <p className="text-sm font-medium text-neutral-900">What’s helping</p>
-          <p className="mt-1 text-sm leading-6 text-neutral-600">
+          <p className="text-sm font-medium text-white">What’s helping</p>
+          <p className="mt-1 text-sm leading-6 text-white/70">
             {report.topPositiveSignal}
           </p>
         </div>
 
         <div>
-          <p className="text-sm font-medium text-neutral-900">Watch for</p>
-          <p className="mt-1 text-sm leading-6 text-neutral-600">
+          <p className="text-sm font-medium text-white">Watch for</p>
+          <p className="mt-1 text-sm leading-6 text-white/70">
             {report.topRisk}
           </p>
         </div>
 
         <div>
-          <p className="text-sm font-medium text-neutral-900">
-            Next best step
-          </p>
-          <p className="mt-1 text-sm leading-6 text-neutral-600">
+          <p className="text-sm font-medium text-white">Next best step</p>
+          <p className="mt-1 text-sm leading-6 text-white/70">
             {report.recommendedAction}
           </p>
         </div>

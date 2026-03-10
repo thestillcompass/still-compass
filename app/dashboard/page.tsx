@@ -522,17 +522,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [hasCheckedInToday, setHasCheckedInToday] = useState(false);
 
-  const testReport = {
-    score: 78,
-    previousAverageScore: 72,
-    trendDelta: 6,
-    status: "steady" as const,
-    topPositiveSignal: "Your consistency improves when mornings are structured.",
-    topRisk: "Energy dips later in the day tend to trigger drift.",
-    recommendedAction: "Complete tomorrow’s check-in before 10 AM.",
-    summary: "You are currently steady and trending upward.",
-    generatedAt: new Date().toISOString(),
-  };
+  
 
   useEffect(() => {
     let mounted = true;
@@ -743,7 +733,63 @@ const noteInsight = useMemo(() => detectNoteInsight(recentEntries), [recentEntri
 const insightMemory = useMemo(() => detectInsightMemory(recentEntries), [recentEntries]);
 const driftPrediction = useMemo(() => detectDriftPrediction(recentEntries), [recentEntries]);
 const weeklyReview = useMemo(() => detectWeeklyReview(recentEntries), [recentEntries]);
-const alignmentReport = useMemo(() => generateAlignmentReport(recentEntries), [recentEntries]);
+
+
+const alignmentCardReport = useMemo(() => {
+  if (!latest || recentEntries.length === 0) {
+    return null;
+  }
+
+  const currentScore = computeCompassScore({
+    emotional_signal: latest.emotional_signal,
+    vital_energy: latest.vital_energy,
+    cognitive_load: latest.cognitive_load,
+  });
+
+  const scores = recentEntries
+    .slice(0, 7)
+    .map((entry) =>
+      computeCompassScore({
+        emotional_signal: entry.emotional_signal,
+        vital_energy: entry.vital_energy,
+        cognitive_load: entry.cognitive_load,
+      })
+    );
+
+  const previousAvg =
+    scores.length > 1
+      ? scores.slice(1).reduce((sum, s) => sum + s, 0) / (scores.length - 1)
+      : null;
+
+  const trendDelta =
+    previousAvg !== null ? Number((currentScore - previousAvg).toFixed(2)) : null;
+
+  let status: "steady" | "realigning" | "slight_drift" | "off_course" = "steady";
+
+  if (currentScore >= 8.5) status = "steady";
+  else if (currentScore >= 7) status = "realigning";
+  else if (currentScore >= 6) status = "slight_drift";
+  else status = "off_course";
+
+  return {
+    score: Number((currentScore * 10).toFixed(0)),
+    previousAverageScore: previousAvg ? Number((previousAvg * 10).toFixed(0)) : null,
+    trendDelta: trendDelta ? Number((trendDelta * 10).toFixed(0)) : null,
+    status,
+    topPositiveSignal: patternInsight,
+    topRisk: driftPrediction,
+    recommendedAction: adjustment ?? "Complete tomorrow’s alignment check-in.",
+    summary: weeklyInsight,
+    generatedAt: new Date().toISOString(),
+  };
+}, [
+  latest,
+  recentEntries,
+  patternInsight,
+  driftPrediction,
+  weeklyInsight,
+  adjustment,
+]);
 
   
 
@@ -827,11 +873,11 @@ const alignmentReport = useMemo(() => generateAlignmentReport(recentEntries), [r
         </div>
 
                 <div className="mt-8">
-          <AlignmentReportCard report={testReport} />
+          <AlignmentReportCard report={alignmentCardReport} />
         </div>
 
         <div className="mt-8">
-          <AlignmentReportCard report={testReport} />
+          <AlignmentReportCard report={alignmentCardReport} />
         </div>
 
         {showDriftAlert && (
@@ -890,46 +936,7 @@ const alignmentReport = useMemo(() => generateAlignmentReport(recentEntries), [r
           </div>
         </div>
 
-        <div className="mt-6 rounded-3xl border border-white/10 bg-white/5 p-6">
-  <div className="text-xs tracking-wide text-white/60">ALIGNMENT REPORT</div>
-
-  <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-    <div>
-      <div className="text-xs text-white/50">Avg Score</div>
-      <div className="mt-1 text-lg font-semibold text-white">
-        {alignmentReport.score !== null ? alignmentReport.score.toFixed(1) : "—"}
-      </div>
-    </div>
-
-    <div>
-      <div className="text-xs text-white/50">Trend</div>
-      <div className="mt-1 text-lg font-semibold text-white">
-        {alignmentReport.trend}
-      </div>
-    </div>
-
-    <div>
-      <div className="text-xs text-white/50">Primary Drag</div>
-      <div className="mt-1 text-lg font-semibold text-white">
-        {alignmentReport.primaryDrag}
-      </div>
-    </div>
-
-    <div>
-      <div className="text-xs text-white/50">Strongest Context</div>
-      <div className="mt-1 text-lg font-semibold text-white">
-        {alignmentReport.strongestContext}
-      </div>
-    </div>
-
-    <div>
-      <div className="text-xs text-white/50">Risk Context</div>
-      <div className="mt-1 text-lg font-semibold text-white">
-        {alignmentReport.riskContext}
-      </div>
-    </div>
-  </div>
-</div>
+        
 
         {/* Intelligence layer */}
         <div className="mt-10">
