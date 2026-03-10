@@ -506,14 +506,38 @@ function generateAlignmentReport(entries: Entry[]) {
   const riskContext = contexts[0]?.context ?? "Unknown";
   const strongestContext = contexts[contexts.length - 1]?.context ?? "Unknown";
 
+  let summary = "Your alignment signals are stabilizing.";
+
+if (trend === "Improving") {
+  summary = `Your alignment is trending upward. ${strongestContext} contexts appear to support stronger signals.`;
+}
+
+if (trend === "Declining") {
+  summary = `Your alignment has weakened recently. ${riskContext} contexts may be contributing to drift.`;
+}
+
+if (primaryDrag === "Cognitive Load") {
+  summary += " Elevated cognitive load appears to be the primary source of drag.";
+}
+
+if (primaryDrag === "Vital Energy") {
+  summary += " Lower vital energy is currently limiting alignment.";
+}
+
+if (primaryDrag === "Emotional Signal") {
+  summary += " Emotional signal softness is influencing your Compass Score.";
+}
+
   return {
     score: averageScore,
     trend,
     primaryDrag,
     strongestContext,
     riskContext,
+    summary,
   };
 }
+
 function DashboardPage() {
   const [mounted, setMounted] = useState(false);
   const [email, setEmail] = useState<string | null>(null);
