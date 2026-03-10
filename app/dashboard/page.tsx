@@ -347,7 +347,42 @@ function detectDriftPrediction(entries: Entry[]) {
 
   return "No strong near-term drift risk is visible yet from your recent signals.";
 }
+function computeDriftProbability(entries: Entry[]) {
+  if (entries.length < 4) return 0;
 
+  const recent = [...entries].slice(0, 5).reverse();
+
+  const scores = recent.map((entry) =>
+    computeCompassScore({
+      emotional_signal: entry.emotional_signal,
+      vital_energy: entry.vital_energy,
+      cognitive_load: entry.cognitive_load,
+    })
+  );
+
+  const loads = recent.map((e) => e.cognitive_load);
+  const energy = recent.map((e) => e.vital_energy);
+
+  let risk = 0;
+
+  const scoreDrop = scores[0] - scores[scores.length - 1];
+  if (scoreDrop >= 1) risk += 25;
+
+  const avgLoad =
+    loads.reduce((sum, v) => sum + v, 0) / loads.length;
+
+  if (avgLoad >= 7) risk += 25;
+
+  const avgEnergy =
+    energy.reduce((sum, v) => sum + v, 0) / energy.length;
+
+  if (avgEnergy <= 5.5) risk += 25;
+
+  const lowAlignmentDays = scores.filter((s) => s < 7).length;
+  if (lowAlignmentDays >= 3) risk += 25;
+
+  return Math.min(risk, 100);
+}
 function detectWeeklyReview(entries: Entry[]) {
   if (entries.length < 5) {
     return "Complete more daily alignments to unlock your weekly review.";
@@ -765,6 +800,10 @@ const contextInsight = useMemo(() => detectContextInsight(recentEntries), [recen
 const noteInsight = useMemo(() => detectNoteInsight(recentEntries), [recentEntries]);
 const insightMemory = useMemo(() => detectInsightMemory(recentEntries), [recentEntries]);
 const driftPrediction = useMemo(() => detectDriftPrediction(recentEntries), [recentEntries]);
+const driftProbability = useMemo(
+  () => computeDriftProbability(recentEntries),
+  [recentEntries]
+);
 const weeklyReview = useMemo(() => detectWeeklyReview(recentEntries), [recentEntries]);
 
 
@@ -1002,6 +1041,24 @@ if (!mounted) {
   <div className="text-xs tracking-wide text-white/60">DRIFT PREDICTION</div>
   <div className="mt-2 text-sm text-white/80">
     {loading ? "Estimating drift risk..." : driftPrediction}
+  </div>
+</div>
+
+<div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+  <div className="text-xs tracking-wide text-white/60">DRIFT PROBABILITY</div>
+  <div className="mt-2 text-2xl font-semibold text-white">
+    {loading ? "…" : `${driftProbability}%`}
+  </div>
+  <div className="mt-2 text-sm text-white/70">
+    {loading
+      ? "Calculating probability..."
+      : driftProbability >= 75
+      ? "High probability of near-term drift."
+      : driftProbability >= 50
+      ? "Moderate probability of near-term drift."
+      : driftProbability >= 25
+      ? "Mild probability of near-term drift."
+      : "Low probability of near-term drift."}
   </div>
 </div>
 
