@@ -115,6 +115,16 @@ export function AlignmentReportCard({
         </div>
       </div>
 
+<div className="mb-6 rounded-2xl border border-white/10 bg-black/30 p-4">
+  <p className="text-xs uppercase tracking-wide text-white/50">
+    Alignment Summary
+  </p>
+
+  <p className="mt-2 text-sm leading-6 text-white/80">
+    {report.summary}
+  </p>
+</div>
+
       <div className="space-y-4">
         <div>
           <p className="text-sm font-medium text-white">What’s helping</p>
