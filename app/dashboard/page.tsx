@@ -873,12 +873,24 @@ const alignmentCardReport = useMemo(() => {
         </div>
 
                 <div className="mt-8">
-          <AlignmentReportCard report={alignmentCardReport} />
+          <AlignmentReportCard
+  report={
+    alignmentCardReport ?? {
+      score: 0,
+      previousAverageScore: null,
+      trendDelta: null,
+      status: "realigning",
+      topPositiveSignal: "Fallback report is rendering.",
+      topRisk: "Live report data is not available yet.",
+      recommendedAction: "Check dashboard data loading in production.",
+      summary: "Fallback summary",
+      generatedAt: new Date().toISOString(),
+    }
+  }
+/>
         </div>
 
-        <div className="mt-8">
-          <AlignmentReportCard report={alignmentCardReport} />
-        </div>
+        
 
         {showDriftAlert && (
           <div className="mt-8 rounded-3xl border border-red-400/20 bg-red-400/10 p-6">
