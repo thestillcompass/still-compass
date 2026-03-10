@@ -14,27 +14,27 @@ function getStatusStyles(status: AlignmentReport["status"]) {
   switch (status) {
     case "steady":
       return {
-        label: "Steady",
-        pill: "border-green-400/20 bg-green-400/10 text-green-300",
+        label: "STEADY",
+        pill: "border-green-400/30 bg-green-400/10 text-green-300",
       };
     case "realigning":
       return {
-        label: "Realigning",
-        pill: "border-blue-400/20 bg-blue-400/10 text-blue-300",
+        label: "REALIGNING",
+        pill: "border-blue-400/30 bg-blue-400/10 text-blue-300",
       };
     case "slight_drift":
       return {
-        label: "Slight Drift",
-        pill: "border-amber-400/20 bg-amber-400/10 text-amber-300",
+        label: "SLIGHT DRIFT",
+        pill: "border-amber-400/30 bg-amber-400/10 text-amber-300",
       };
     case "off_course":
       return {
-        label: "Off Course",
-        pill: "border-red-400/20 bg-red-400/10 text-red-300",
+        label: "OFF COURSE",
+        pill: "border-red-400/30 bg-red-400/10 text-red-300",
       };
     default:
       return {
-        label: "Unknown",
+        label: "UNKNOWN",
         pill: "border-white/10 bg-white/5 text-white/70",
       };
   }
@@ -50,8 +50,11 @@ export function AlignmentReportCard({
       <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
         <div className="mb-2">
           <h3 className="text-lg font-semibold text-white">Alignment Report</h3>
-          <p className="text-sm text-white/50">Your latest pattern-based summary</p>
+          <p className="text-sm text-white/50">
+            Your latest pattern-based summary
+          </p>
         </div>
+
         <p className="text-sm text-white/70">
           Complete more check-ins to generate your first alignment report.
         </p>
@@ -66,24 +69,30 @@ export function AlignmentReportCard({
       <div className="mb-5 flex items-start justify-between gap-4">
         <div>
           <h3 className="text-lg font-semibold text-white">Alignment Report</h3>
-          <p className="text-sm text-white/50">Your latest pattern-based summary</p>
+          <p className="text-sm text-white/50">
+            Your latest pattern-based summary
+          </p>
         </div>
 
-        <span
-          className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${status.pill}`}
+        <div
+          className={`rounded-full border px-3 py-1 text-xs font-medium ${status.pill}`}
         >
           {status.label}
-        </span>
+        </div>
       </div>
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-          <p className="text-xs uppercase tracking-wide text-white/50">Compass Score</p>
+          <p className="text-xs uppercase tracking-wide text-white/50">
+            Compass Score
+          </p>
           <p className="mt-2 text-3xl font-bold text-white">{report.score}</p>
         </div>
 
         <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-          <p className="text-xs uppercase tracking-wide text-white/50">Trend</p>
+          <p className="text-xs uppercase tracking-wide text-white/50">
+            Trend
+          </p>
           <p className="mt-2 text-3xl font-bold text-white">
             {report.trendDelta === null
               ? "—"
@@ -91,11 +100,15 @@ export function AlignmentReportCard({
               ? `+${report.trendDelta}`
               : report.trendDelta}
           </p>
-          <p className="mt-1 text-sm text-white/50">vs previous 7-day average</p>
+          <p className="mt-1 text-sm text-white/50">
+            vs previous 7-day average
+          </p>
         </div>
 
         <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-          <p className="text-xs uppercase tracking-wide text-white/50">Previous Avg</p>
+          <p className="text-xs uppercase tracking-wide text-white/50">
+            Previous Avg
+          </p>
           <p className="mt-2 text-3xl font-bold text-white">
             {report.previousAverageScore ?? "—"}
           </p>
