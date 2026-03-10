@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import {
   LineChart,
   Line,
@@ -513,7 +514,7 @@ function generateAlignmentReport(entries: Entry[]) {
     riskContext,
   };
 }
-export default function DashboardPage() {
+function DashboardPage() {
   const [mounted, setMounted] = useState(false);
   const [email, setEmail] = useState<string | null>(null);
   const [name, setName] = useState<string | null>(null);
@@ -1143,3 +1144,7 @@ if (!mounted) {
     </main>
   );
 }
+
+export default dynamic(() => Promise.resolve(DashboardPage), {
+  ssr: false,
+});
