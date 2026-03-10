@@ -514,13 +514,17 @@ function generateAlignmentReport(entries: Entry[]) {
   };
 }
 export default function DashboardPage() {
-
+  const [mounted, setMounted] = useState(false);
   const [email, setEmail] = useState<string | null>(null);
   const [name, setName] = useState<string | null>(null);
   const [latest, setLatest] = useState<Entry | null>(null);
   const [recentEntries, setRecentEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasCheckedInToday, setHasCheckedInToday] = useState(false);
+
+  useEffect(() => {
+  setMounted(true);
+}, []);
 
   
 
@@ -831,7 +835,9 @@ const alignmentCardReport = useMemo(() => {
       baselineMessage = "You are currently close to your usual alignment range.";
     }
   }
-
+if (!mounted) {
+  return null;
+}
   return (
     <main className="min-h-screen bg-black text-white">
       <div className="mx-auto max-w-5xl px-6 py-16">
