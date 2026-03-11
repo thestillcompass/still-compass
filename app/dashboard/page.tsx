@@ -411,6 +411,47 @@ function computeAlignmentStability(entries: Entry[]) {
   return stability;
 }
 
+function generateDailyGuidance(
+  latest: Entry | null,
+  driftProbability: number,
+  alignmentStability: number | null
+) {
+  if (!latest) {
+    return "Log your alignment today to receive guidance.";
+  }
+
+  const load = latest.cognitive_load;
+  const energy = latest.vital_energy;
+  const emotional = latest.emotional_signal;
+
+  // Cognitive load guidance
+  if (load >= 7) {
+    return "Cognitive load is high. Reduce decision complexity and avoid stacking meetings today.";
+  }
+
+  // Energy recovery guidance
+  if (energy <= 5) {
+    return "Vital energy is low. Protect recovery time and reduce non-essential commitments.";
+  }
+
+  // Emotional signal guidance
+  if (emotional <= 5) {
+    return "Emotional signal is soft today. Slow down and avoid high-pressure interactions.";
+  }
+
+  // Drift probability guidance
+  if (driftProbability >= 60) {
+    return "Your signals suggest rising drift risk. Simplify your schedule and protect focus blocks.";
+  }
+
+  // Stability guidance
+  if (alignmentStability !== null && alignmentStability < 60) {
+    return "Your signals are volatile. Maintain a lighter schedule to stabilize alignment.";
+  }
+
+  return "Your signals are stable today. Maintain your current rhythm.";
+}
+
 function detectWeeklyReview(entries: Entry[]) {
   if (entries.length < 5) {
     return "Complete more daily alignments to unlock your weekly review.";
@@ -836,6 +877,12 @@ const alignmentStability = useMemo(
   () => computeAlignmentStability(recentEntries),
   [recentEntries]
 );
+
+const dailyGuidance = useMemo(
+  () => generateDailyGuidance(latest, driftProbability, alignmentStability),
+  [latest, driftProbability, alignmentStability]
+);
+
 const weeklyReview = useMemo(() => detectWeeklyReview(recentEntries), [recentEntries]);
 
 
@@ -1059,11 +1106,14 @@ if (!mounted) {
         </div>
 
         <div className="mt-4 rounded-3xl border border-white/10 bg-white/5 p-6">
-          <div className="text-xs tracking-wide text-white/60">TODAY&apos;S ADJUSTMENT</div>
-          <div className="mt-2 text-sm text-white/80">
-            {adjustment ?? "Log a check-in to receive guidance."}
-          </div>
-        </div>
+  <div className="text-xs tracking-wide text-white/60">
+    TODAY'S GUIDANCE
+  </div>
+
+  <div className="mt-2 text-sm text-white/80">
+    {loading ? "Generating guidance..." : dailyGuidance}
+  </div>
+</div>
 
         
 
