@@ -452,6 +452,48 @@ function generateDailyGuidance(
   return "Your signals are stable today. Maintain your current rhythm.";
 }
 
+function generateDriftTimeline(entries: Entry[]) {
+  if (entries.length < 4) {
+    return [];
+  }
+
+  const recent = [...entries].slice(0, 5).reverse();
+
+  return recent.map((entry, index) => {
+    const score = computeCompassScore({
+      emotional_signal: entry.emotional_signal,
+      vital_energy: entry.vital_energy,
+      cognitive_load: entry.cognitive_load,
+    });
+
+    const dayLabel =
+      index === recent.length - 1
+        ? "Today"
+        : new Date(entry.created_at).toLocaleDateString("en-US", {
+            weekday: "short",
+          });
+
+    let message = "Signals stable.";
+
+    if (entry.cognitive_load >= 7) {
+      message = "Cognitive load increased.";
+    } else if (entry.vital_energy <= 5) {
+      message = "Energy dipped.";
+    } else if (entry.emotional_signal <= 5) {
+      message = "Emotional signal softened.";
+    } else if (score < 7) {
+      message = "Drift signals emerging.";
+    } else if (score >= 8) {
+      message = "Alignment remained steady.";
+    }
+
+    return {
+      day: dayLabel,
+      message,
+    };
+  });
+}
+
 function detectWeeklyReview(entries: Entry[]) {
   if (entries.length < 5) {
     return "Complete more daily alignments to unlock your weekly review.";
@@ -881,6 +923,11 @@ const alignmentStability = useMemo(
 const dailyGuidance = useMemo(
   () => generateDailyGuidance(latest, driftProbability, alignmentStability),
   [latest, driftProbability, alignmentStability]
+);
+
+const driftTimeline = useMemo(
+  () => generateDriftTimeline(recentEntries),
+  [recentEntries]
 );
 
 const weeklyReview = useMemo(() => detectWeeklyReview(recentEntries), [recentEntries]);
