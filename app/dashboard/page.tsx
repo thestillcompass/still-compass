@@ -383,6 +383,34 @@ function computeDriftProbability(entries: Entry[]) {
 
   return Math.min(risk, 100);
 }
+
+function computeAlignmentStability(entries: Entry[]) {
+  if (entries.length < 5) return null;
+
+  const recent = [...entries].slice(0, 7);
+
+  const scores = recent.map((entry) =>
+    computeCompassScore({
+      emotional_signal: entry.emotional_signal,
+      vital_energy: entry.vital_energy,
+      cognitive_load: entry.cognitive_load,
+    })
+  );
+
+  const average =
+    scores.reduce((sum, value) => sum + value, 0) / scores.length;
+
+  const variance =
+    scores.reduce((sum, value) => sum + Math.pow(value - average, 2), 0) /
+    scores.length;
+
+  const stdDev = Math.sqrt(variance);
+
+  const stability = Math.max(0, Math.min(100, Math.round(100 - stdDev * 20)));
+
+  return stability;
+}
+
 function detectWeeklyReview(entries: Entry[]) {
   if (entries.length < 5) {
     return "Complete more daily alignments to unlock your weekly review.";
@@ -804,6 +832,10 @@ const driftProbability = useMemo(
   () => computeDriftProbability(recentEntries),
   [recentEntries]
 );
+const alignmentStability = useMemo(
+  () => computeAlignmentStability(recentEntries),
+  [recentEntries]
+);
 const weeklyReview = useMemo(() => detectWeeklyReview(recentEntries), [recentEntries]);
 
 
@@ -1068,6 +1100,26 @@ if (!mounted) {
       : driftProbability >= 25
       ? "Mild probability of near-term drift."
       : "Low probability of near-term drift."}
+  </div>
+</div>
+
+<div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+  <div className="text-xs tracking-wide text-white/60">
+    ALIGNMENT STABILITY
+  </div>
+
+  <div className="mt-2 text-2xl font-semibold text-white">
+    {alignmentStability === null ? "—" : `${alignmentStability}%`}
+  </div>
+
+  <div className="mt-2 text-sm text-white/70">
+    {alignmentStability === null
+      ? "Not enough recent data to estimate stability."
+      : alignmentStability >= 80
+      ? "Your alignment signals are very stable."
+      : alignmentStability >= 60
+      ? "Your alignment signals are moderately stable."
+      : "Your alignment signals appear volatile."}
   </div>
 </div>
 
