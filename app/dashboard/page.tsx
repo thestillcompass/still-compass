@@ -887,6 +887,15 @@ const alignmentCardReport = useMemo(() => {
       ? score - baseline
       : null;
 
+      const driftRiskColor =
+  driftProbability >= 75
+    ? "text-red-400"
+    : driftProbability >= 50
+    ? "text-orange-400"
+    : driftProbability >= 25
+    ? "text-amber-400"
+    : "text-green-400";
+
   let baselineMessage =
     "Complete 14 daily alignments to establish your baseline.";
 
@@ -1046,7 +1055,7 @@ if (!mounted) {
 
 <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
   <div className="text-xs tracking-wide text-white/60">DRIFT PROBABILITY</div>
-  <div className="mt-2 text-2xl font-semibold text-white">
+  <div className={`mt-2 text-2xl font-semibold ${driftRiskColor}`}>
     {loading ? "…" : `${driftProbability}%`}
   </div>
   <div className="mt-2 text-sm text-white/70">
