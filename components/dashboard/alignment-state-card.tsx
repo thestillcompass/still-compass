@@ -4,17 +4,29 @@ type AlignmentStateCardProps = {
   compassScore: number;
   driftPrediction: number;
   stability: number;
+  emotionalSignal?: number | null;
+  vitalEnergy?: number | null;
+  cognitiveLoad?: number | null;
+  context?: string | null;
 };
 
 export default function AlignmentStateCard({
   compassScore,
   driftPrediction,
   stability,
+  emotionalSignal,
+  vitalEnergy,
+  cognitiveLoad,
+  context,
 }: AlignmentStateCardProps) {
   const state = getAlignmentState({
     compassScore,
     driftPrediction,
     stability,
+    emotionalSignal,
+    vitalEnergy,
+    cognitiveLoad,
+    context,
   });
 
   return (

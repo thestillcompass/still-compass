@@ -19,13 +19,44 @@ type Inputs = {
   compassScore: number;
   driftPrediction: number;
   stability: number;
+  emotionalSignal?: number | null;
+  vitalEnergy?: number | null;
+  cognitiveLoad?: number | null;
+  context?: string | null;
 };
 
 function getAlignmentReason({
   compassScore,
   driftPrediction,
   stability,
+  emotionalSignal,
+  vitalEnergy,
+  cognitiveLoad,
 }: Inputs) {
+  if (
+    cognitiveLoad !== null &&
+    cognitiveLoad !== undefined &&
+    cognitiveLoad >= 8
+  ) {
+    return "High cognitive load is currently the strongest source of pressure on your alignment.";
+  }
+
+  if (
+    vitalEnergy !== null &&
+    vitalEnergy !== undefined &&
+    vitalEnergy <= 4
+  ) {
+    return "Low vital energy is reducing your ability to stay centered and consistent.";
+  }
+
+  if (
+    emotionalSignal !== null &&
+    emotionalSignal !== undefined &&
+    emotionalSignal <= 4
+  ) {
+    return "Your emotional signal looks muted right now, which may be softening your alignment.";
+  }
+
   if (compassScore >= 75 && driftPrediction <= 35 && stability >= 65) {
     return "Your score is strong, drift risk is low, and your recent pattern looks stable.";
   }
@@ -57,57 +88,104 @@ function getAlignmentReason({
   return "Your latest signals suggest a mixed but recoverable state.";
 }
 
+function getContextPrefix(context?: string | null) {
+  if (!context) return "";
+  return `In ${context.toLowerCase()} context, `;
+}
+
 function getAlignmentAction({
   compassScore,
   driftPrediction,
   stability,
+  emotionalSignal,
+  vitalEnergy,
+  cognitiveLoad,
+  context,
 }: Inputs) {
-  if (compassScore >= 75 && driftPrediction <= 35 && stability >= 65) {
-    return "Protect your current rhythm and avoid adding unnecessary decision load today.";
+  const contextPrefix = getContextPrefix(context);
+
+  if (
+    cognitiveLoad !== null &&
+    cognitiveLoad !== undefined &&
+    cognitiveLoad >= 8
+  ) {
+    return `${contextPrefix}reduce decisions, narrow your focus to one priority, and avoid stacking more input right now.`;
+  }
+
+  if (
+    vitalEnergy !== null &&
+    vitalEnergy !== undefined &&
+    vitalEnergy <= 4
+  ) {
+    return `${contextPrefix}protect recovery first and lower the intensity of your next block.`;
+  }
+
+  if (
+    emotionalSignal !== null &&
+    emotionalSignal !== undefined &&
+    emotionalSignal <= 4
+  ) {
+    return `${contextPrefix}slow the pace, reduce pressure, and choose a gentler next step.`;
   }
 
   if (driftPrediction >= 75 && stability < 50) {
-    return "Reduce pressure for the next few hours and prioritize one stabilizing action before taking on more.";
+    return `${contextPrefix}reduce pressure for the next few hours and prioritize one stabilizing action before taking on more.`;
   }
 
   if (stability < 60 && driftPrediction >= 50) {
-    return "Simplify the rest of your day and create one lighter block to regain consistency.";
+    return `${contextPrefix}simplify the rest of your day and create one lighter block to regain consistency.`;
   }
 
   if (compassScore < 55 && driftPrediction >= 50) {
-    return "Pause, reduce non-essential commitments, and reset around one clear priority.";
+    return `${contextPrefix}pause, reduce non-essential commitments, and reset around one clear priority.`;
+  }
+
+  if (compassScore >= 75 && driftPrediction <= 35 && stability >= 65) {
+    return `${contextPrefix}protect your current rhythm and avoid adding unnecessary decision load today.`;
   }
 
   if (compassScore < 60) {
-    return "Choose a smaller target for the next block instead of pushing through full intensity.";
+    return `${contextPrefix}choose a smaller target for the next block instead of pushing through full intensity.`;
   }
 
   if (stability < 60) {
-    return "Keep your schedule lighter than usual until your signals feel steadier.";
+    return `${contextPrefix}keep your schedule lighter than usual until your signals feel steadier.`;
   }
 
   if (driftPrediction > 35) {
-    return "Stay intentional with your next few hours so mild drift does not build momentum.";
+    return `${contextPrefix}stay intentional with your next few hours so mild drift does not build momentum.`;
   }
 
-  return "Take one small stabilizing step and reassess after your next check-in.";
+  return `${contextPrefix}take one small stabilizing step and reassess after your next check-in.`;
 }
 
 export function getAlignmentState({
   compassScore,
   driftPrediction,
   stability,
+  emotionalSignal,
+  vitalEnergy,
+  cognitiveLoad,
+  context,
 }: Inputs): AlignmentState {
   const reason = getAlignmentReason({
     compassScore,
     driftPrediction,
     stability,
+    emotionalSignal,
+    vitalEnergy,
+    cognitiveLoad,
+    context,
   });
 
   const action = getAlignmentAction({
     compassScore,
     driftPrediction,
     stability,
+    emotionalSignal,
+    vitalEnergy,
+    cognitiveLoad,
+    context,
   });
 
   if (compassScore >= 75 && driftPrediction <= 35 && stability >= 65) {

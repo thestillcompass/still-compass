@@ -1144,10 +1144,14 @@ if (!mounted) {
 
                 <div className="mt-6">
           <AlignmentStateCard
-            compassScore={alignmentStateCompassScore}
-            driftPrediction={alignmentStateDriftPrediction}
-            stability={alignmentStateStability}
-          />
+  compassScore={alignmentStateCompassScore}
+  driftPrediction={alignmentStateDriftPrediction}
+  stability={alignmentStateStability}
+  emotionalSignal={latest?.emotional_signal ?? null}
+  vitalEnergy={latest?.vital_energy ?? null}
+  cognitiveLoad={latest?.cognitive_load ?? null}
+  context={latest?.context ?? null}
+/>
         </div>
 
 
