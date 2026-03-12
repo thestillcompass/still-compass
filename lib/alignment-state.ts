@@ -9,6 +9,7 @@ export type AlignmentState = {
   label: string;
   emoji: string;
   description: string;
+  reason: string;
   accentClass: string;
   badgeClass: string;
 };
@@ -19,56 +20,98 @@ type Inputs = {
   stability: number;
 };
 
+function getAlignmentReason({
+  compassScore,
+  driftPrediction,
+  stability,
+}: Inputs) {
+  if (compassScore >= 75 && driftPrediction <= 35 && stability >= 65) {
+    return "Your score is strong, drift risk is low, and your recent pattern looks stable.";
+  }
+
+  if (driftPrediction >= 75 && stability < 50) {
+    return "High drift risk and unstable recent signals are pulling you away from center.";
+  }
+
+  if (stability < 60 && driftPrediction >= 50) {
+    return "Your recent signals look inconsistent, and drift risk is starting to rise.";
+  }
+
+  if (compassScore < 55 && driftPrediction >= 50) {
+    return "Lower alignment and elevated drift risk suggest you may be moving off course.";
+  }
+
+  if (compassScore < 60) {
+    return "Your current score is below your stronger alignment range.";
+  }
+
+  if (stability < 60) {
+    return "Your alignment is present, but recent signals have been less steady.";
+  }
+
+  if (driftPrediction > 35) {
+    return "Your alignment is holding, but drift risk is no longer minimal.";
+  }
+
+  return "Your latest signals suggest a mixed but recoverable state.";
+}
+
 export function getAlignmentState({
   compassScore,
   driftPrediction,
   stability,
 }: Inputs): AlignmentState {
-  // Strong positive state
+  const reason = getAlignmentReason({
+    compassScore,
+    driftPrediction,
+    stability,
+  });
+
   if (compassScore >= 75 && driftPrediction <= 35 && stability >= 65) {
     return {
       key: "aligned",
       label: "Aligned",
       emoji: "🧭",
       description: "You’re moving in sync with your values and current rhythm.",
+      reason,
       accentClass: "text-emerald-400",
       badgeClass:
         "border border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
     };
   }
 
-  // Mild instability, but still recoverable
   if (compassScore >= 55 && driftPrediction <= 55 && stability >= 45) {
     return {
       key: "realigning",
       label: "Realigning",
       emoji: "✨",
-      description: "You’re slightly off-center, but trending back toward balance.",
+      description: "You’re slightly off-center, but still within a recoverable range.",
+      reason,
       accentClass: "text-amber-300",
       badgeClass:
         "border border-amber-500/30 bg-amber-500/10 text-amber-200",
     };
   }
 
-  // Noticeable drift
   if (compassScore >= 35 && driftPrediction <= 75) {
     return {
       key: "drifting",
       label: "Drifting",
       emoji: "🌊",
       description: "Your recent pattern suggests reduced clarity or consistency.",
+      reason,
       accentClass: "text-orange-300",
       badgeClass:
         "border border-orange-500/30 bg-orange-500/10 text-orange-200",
     };
   }
 
-  // Low alignment / strong disconnect
   return {
     key: "disconnected",
     label: "Disconnected",
     emoji: "🌑",
     description: "Your signals show distance from steadiness, intention, or direction.",
+    reason,
     accentClass: "text-rose-300",
     badgeClass: "border border-rose-500/30 bg-rose-500/10 text-rose-200",
   };

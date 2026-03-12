@@ -41,6 +41,13 @@ export default function AlignmentStateCard({
         {state.description}
       </p>
 
+      <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+        <p className="text-[11px] uppercase tracking-[0.16em] text-white/45">
+          Why this state
+        </p>
+        <p className="mt-2 text-sm leading-6 text-white/75">{state.reason}</p>
+      </div>
+
       <div className="mt-6 grid grid-cols-3 gap-3">
         <MetricPill label="Compass" value={compassScore} />
         <MetricPill label="Drift" value={driftPrediction} inverse />
@@ -81,7 +88,6 @@ function getTone(value: number, inverse: boolean) {
     return "text-rose-300";
   }
 
-  // For drift, lower is better
   if (value <= 35) return "text-emerald-300";
   if (value <= 55) return "text-amber-200";
   if (value <= 75) return "text-orange-200";
