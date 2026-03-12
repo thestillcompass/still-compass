@@ -13,6 +13,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { computeCompassScore } from "@/lib/compass";
 import { computeDriftStatus, microAdjustment } from "@/lib/drift";
 import { AlignmentReportCard } from "@/components/dashboard/alignment-report-card";
+import AlignmentStateCard from "@/components/dashboard/alignment-state-card";
 
 type Entry = {
   id: string;
@@ -1034,6 +1035,14 @@ const alignmentCardReport = useMemo(() => {
       baselineMessage = "You are currently close to your usual alignment range.";
     }
   }
+
+const alignmentStateCompassScore =
+  score !== null && score !== undefined ? Math.round(score * 10) : 0;
+
+const alignmentStateDriftPrediction = driftProbability;
+
+const alignmentStateStability = alignmentStability ?? 0;
+
 if (!mounted) {
   return null;
 }
@@ -1132,6 +1141,15 @@ if (!mounted) {
             {loading ? "Loading latest signal…" : drift?.status ?? "No signal yet."}
           </div>
         </div>
+
+                <div className="mt-6">
+          <AlignmentStateCard
+            compassScore={alignmentStateCompassScore}
+            driftPrediction={alignmentStateDriftPrediction}
+            stability={alignmentStateStability}
+          />
+        </div>
+
 
         <div className="mt-6 grid gap-4 sm:grid-cols-3">
           <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
