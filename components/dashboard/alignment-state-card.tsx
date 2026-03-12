@@ -48,6 +48,13 @@ export default function AlignmentStateCard({
         <p className="mt-2 text-sm leading-6 text-white/75">{state.reason}</p>
       </div>
 
+      <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+        <p className="text-[11px] uppercase tracking-[0.16em] text-white/45">
+          Next best step
+        </p>
+        <p className="mt-2 text-sm leading-6 text-white/75">{state.action}</p>
+      </div>
+
       <div className="mt-6 grid grid-cols-3 gap-3">
         <MetricPill label="Compass" value={compassScore} />
         <MetricPill label="Drift" value={driftPrediction} inverse />
