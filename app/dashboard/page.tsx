@@ -1168,21 +1168,8 @@ if (!mounted) {
         <div className="mt-10">
           <div className="text-xs tracking-wide text-white/40">INTELLIGENCE</div>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            
             <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-              <div className="text-xs tracking-wide text-white/60">SIGNAL DRIVER</div>
-              <div className="mt-2 text-sm text-white/80">
-                {loading ? "Identifying dominant driver…" : signalDriver}
-              </div>
-            </div>
-
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:col-span-2">
-  <div className="text-xs tracking-wide text-white/60">DRIFT PREDICTION</div>
-  <div className="mt-2 text-sm text-white/80">
-    {loading ? "Estimating drift risk..." : driftPrediction}
-  </div>
-</div>
-
-<div className="rounded-3xl border border-white/10 bg-white/5 p-6">
   <div className="text-xs tracking-wide text-white/60">DRIFT PROBABILITY</div>
   <div className={`mt-2 text-2xl font-semibold ${driftRiskColor}`}>
     {loading ? "…" : `${driftProbability}%`}
@@ -1200,7 +1187,8 @@ if (!mounted) {
   </div>
 </div>
 
-<div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+
+  <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
   <div className="text-xs tracking-wide text-white/60">
     ALIGNMENT STABILITY
   </div>
@@ -1221,6 +1209,46 @@ if (!mounted) {
 </div>
 
 <div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:col-span-2">
+  <div className="text-xs tracking-wide text-white/60">DRIFT PREDICTION</div>
+  <div className="mt-2 text-sm text-white/80">
+    {loading ? "Estimating drift risk..." : driftPrediction}
+  </div>
+</div>
+
+
+<div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+              <div className="text-xs tracking-wide text-white/60">SIGNAL DRIVER</div>
+              <div className="mt-2 text-sm text-white/80">
+                {loading ? "Identifying dominant driver…" : signalDriver}
+              </div>
+            </div>
+
+
+<div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:col-span-2">
+  <div className="text-xs tracking-wide text-white/60">DRIFT TIMELINE</div>
+
+  <div className="mt-4 space-y-3">
+    {driftTimeline.length === 0 ? (
+      <div className="text-sm text-white/70">
+        Not enough recent data to generate a drift timeline.
+      </div>
+    ) : (
+      driftTimeline.map((item, index) => (
+        <div
+          key={`${item.day}-${index}`}
+          className="flex items-start gap-3 rounded-2xl border border-white/10 bg-black/20 px-4 py-3"
+        >
+          <div className="min-w-[52px] text-sm font-medium text-white">
+            {item.day}
+          </div>
+          <div className="text-sm text-white/75">{item.message}</div>
+        </div>
+      ))
+    )}
+  </div>
+</div>
+
+<div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:col-span-2">
   <div className="text-xs tracking-wide text-white/60">WEEKLY REVIEW</div>
   <div className="mt-2 text-sm text-white/80">
     {loading ? "Compiling weekly review..." : weeklyReview}
@@ -1228,11 +1256,12 @@ if (!mounted) {
 </div>
 
             <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-              <div className="text-xs tracking-wide text-white/60">CONTEXT INSIGHT</div>
+              <div className="text-xs tracking-wide text-white/60">WEEKLY INSIGHT</div>
               <div className="mt-2 text-sm text-white/80">
-                {loading ? "Analyzing context patterns…" : contextInsight}
+                {loading ? "Analyzing weekly signal…" : weeklyInsight}
               </div>
             </div>
+
 
             <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
               <div className="text-xs tracking-wide text-white/60">PATTERN INSIGHT</div>
@@ -1242,11 +1271,12 @@ if (!mounted) {
             </div>
 
             <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-              <div className="text-xs tracking-wide text-white/60">WEEKLY INSIGHT</div>
+              <div className="text-xs tracking-wide text-white/60">CONTEXT INSIGHT</div>
               <div className="mt-2 text-sm text-white/80">
-                {loading ? "Analyzing weekly signal…" : weeklyInsight}
+                {loading ? "Analyzing context patterns…" : contextInsight}
               </div>
             </div>
+
             <div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:col-span-2">
               <div className="text-xs tracking-wide text-white/60">INSIGHT MEMORY</div>
               <div className="mt-2 text-sm text-white/80">
