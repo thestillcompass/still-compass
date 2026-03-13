@@ -654,6 +654,186 @@ function generateDailyGuidance(
   return "Your signals are stable today. Maintain your current rhythm.";
 }
 
+function generateAlignmentAdjustment(
+  latest: Entry | null,
+  driftProbability: number,
+  stability: number | null
+) {
+  if (!latest) {
+    return "Log today's alignment to receive guidance.";
+  }
+
+  const load = latest.cognitive_load;
+  const energy = latest.vital_energy;
+  const emotional = latest.emotional_signal;
+
+  if (load >= 7) {
+    return "Cognitive load is elevated today. Reduce decision complexity and avoid stacking meetings.";
+  }
+
+  if (energy <= 5) {
+    return "Vital energy is low. Protect recovery time and reduce non-essential commitments.";
+  }
+
+  if (emotional <= 5) {
+    return "Emotional signal is soft today. Slow down and avoid high-pressure interactions.";
+  }
+
+  if (driftProbability >= 60) {
+    return "Signals suggest rising drift risk. Simplify your schedule and protect focus blocks.";
+  }
+
+  if (stability !== null && stability < 60) {
+    return "Your signals are volatile. Keep today's schedule lighter to stabilize alignment.";
+  }
+
+  return "Your signals are stable today. Maintain your current rhythm.";
+}
+
+function generateDriftIntervention(
+  latest: Entry | null,
+  driftProbability: number,
+  driftPrediction: string,
+  personalDriftTrigger: string,
+  recoverySignal: string
+) {
+  if (!latest) {
+    return "Log today's alignment to unlock a drift intervention.";
+  }
+
+  const load = latest.cognitive_load;
+  const energy = latest.vital_energy;
+  const emotional = latest.emotional_signal;
+
+  if (load >= 8) {
+    return "Reduce decision density before noon. Protect one low-noise block and avoid stacking meetings.";
+  }
+
+  if (energy <= 4) {
+    return "Protect recovery time over the next 24 hours. Reduce non-essential work and keep output expectations lighter.";
+  }
+
+  if (emotional <= 4) {
+    return "Lower pressure inputs today. Avoid high-friction conversations and create more emotional breathing room.";
+  }
+
+  if (
+    personalDriftTrigger
+      .toLowerCase()
+      .includes("cognitive load")
+  ) {
+    return "Cognitive load appears to be a recurring drift trigger. Simplify today's workload before drag compounds.";
+  }
+
+  if (
+    personalDriftTrigger
+      .toLowerCase()
+      .includes("vital energy")
+  ) {
+    return "Lower energy repeatedly precedes drift. Protect recovery first and avoid overcommitting today.";
+  }
+
+  if (
+    personalDriftTrigger
+      .toLowerCase()
+      .includes("emotional signal")
+  ) {
+    return "Emotional softness appears to precede drift. Keep today's environment calmer and reduce pressure where possible.";
+  }
+
+  if (
+    recoverySignal
+      .toLowerCase()
+      .includes("cognitive load stays low")
+  ) {
+    return "Your recovery improves when load stays low. Remove one unnecessary demand from today to preserve alignment.";
+  }
+
+  if (
+    recoverySignal
+      .toLowerCase()
+      .includes("higher vital energy")
+  ) {
+    return "Energy appears central to recovery. Work in shorter bursts and leave room for restoration between tasks.";
+  }
+
+  if (
+    recoverySignal
+      .toLowerCase()
+      .includes("stronger emotional signal")
+  ) {
+    return "Emotional stability supports recovery. Avoid environments that create unnecessary inner friction today.";
+  }
+
+  if (driftProbability >= 75) {
+    return "Drift risk is high. Move today into protection mode: fewer decisions, less context switching, more recovery space.";
+  }
+
+  if (driftProbability >= 50) {
+    return "Moderate drift risk is present. Keep the day simpler than usual and protect your most important block.";
+  }
+
+  if (driftPrediction.toLowerCase().includes("energy trends downward")) {
+    return "Energy is trending downward. Front-load essential work and avoid burning capacity late in the day.";
+  }
+
+  if (driftPrediction.toLowerCase().includes("cognitive load remains elevated")) {
+    return "Load is staying elevated. Reduce complexity early before it turns into deeper drift.";
+  }
+
+  return "No immediate intervention is needed. Current signals suggest relative stability.";
+}
+
+function generateSignalNarrative(
+  latest: Entry | null,
+  signalDriver: string,
+  driftPrediction: string,
+  personalDriftTrigger: string,
+  recoverySignal: string,
+  alignmentAdjustment: string
+) {
+  if (!latest) {
+    return "Log today's alignment to generate your signal narrative.";
+  }
+
+  const parts: string[] = [];
+
+  if (signalDriver !== "No dominant signal driver detected yet.") {
+    parts.push(signalDriver);
+  }
+
+  if (
+    personalDriftTrigger !==
+    "No clear personal drift trigger has emerged yet."
+  ) {
+    parts.push(personalDriftTrigger);
+  }
+
+  if (
+    driftPrediction !==
+    "No strong near-term drift risk is visible yet from your recent signals."
+  ) {
+    parts.push(driftPrediction);
+  }
+
+  if (
+    recoverySignal !==
+    "No clear recovery signal has emerged yet."
+  ) {
+    parts.push(recoverySignal);
+  }
+
+  if (!alignmentAdjustment.toLowerCase().includes("maintain your current rhythm")) {
+  parts.push(`Recommended adjustment: ${alignmentAdjustment}`);
+} else {
+  parts.push(
+    "Current signals suggest stable alignment. No corrective adjustment is required today."
+  );
+}
+
+  return parts.join(" ");
+}
+
 function generateDriftTimeline(entries: Entry[]) {
   if (entries.length < 4) {
     return [];
@@ -1144,9 +1324,52 @@ const recoverySignal = useMemo(
   [recentEntries]
 );
 
+const alignmentAdjustment = useMemo(
+  () => generateAlignmentAdjustment(latest, driftProbability, alignmentStability),
+  [latest, driftProbability, alignmentStability]
+);
+
+const driftIntervention = useMemo(
+  () =>
+    generateDriftIntervention(
+      latest,
+      driftProbability,
+      driftPrediction,
+      personalDriftTrigger,
+      recoverySignal
+    ),
+  [
+    latest,
+    driftProbability,
+    driftPrediction,
+    personalDriftTrigger,
+    recoverySignal,
+  ]
+);
+
 const contextRecoveryPattern = useMemo(
   () => detectContextRecoveryPattern(recentEntries),
   [recentEntries]
+);
+
+const signalNarrative = useMemo(
+  () =>
+    generateSignalNarrative(
+      latest,
+      signalDriver,
+      driftPrediction,
+      personalDriftTrigger,
+      recoverySignal,
+      alignmentAdjustment
+    ),
+  [
+    latest,
+    signalDriver,
+    driftPrediction,
+    personalDriftTrigger,
+    recoverySignal,
+    alignmentAdjustment,
+  ]
 );
 
 const alignmentCardReport = useMemo(() => {
@@ -1358,8 +1581,36 @@ if (!mounted) {
   trendTone={trendTone}
   driftForecast={driftPrediction}
 />
+<div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+  <div className="text-xs tracking-wide text-white/60">
+    TODAY'S ADJUSTMENT
+  </div>
+
+  <div className="mt-2 text-sm text-white/80">
+    {loading
+      ? "Generating adjustment..."
+      : alignmentAdjustment}
+  </div>
 </div>
-        
+<div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+  <div className="text-xs tracking-wide text-white/60">
+    DRIFT INTERVENTION
+  </div>
+
+  <div className="mt-2 text-sm text-white/80">
+    {loading ? "Generating intervention..." : driftIntervention}
+  </div>
+</div>
+<div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+  <div className="text-xs tracking-wide text-white/60">
+    SIGNAL NARRATIVE
+  </div>
+
+  <div className="mt-2 text-sm leading-relaxed text-white/80">
+    {loading ? "Generating narrative..." : signalNarrative}
+  </div>
+</div>
+</div>
 
         {/* Forecast */}
         <div className="mt-10">
