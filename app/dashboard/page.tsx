@@ -12,7 +12,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { computeCompassScore } from "@/lib/compass";
 import { computeDriftStatus, microAdjustment } from "@/lib/drift";
-import { AlignmentReportCard } from "@/components/dashboard/alignment-report-card";
+
 import AlignmentStateCard from "@/components/dashboard/alignment-state-card";
 
 type Entry = {
@@ -178,6 +178,207 @@ function detectContextInsight(entries: Entry[]) {
   }
 
   return `Your lowest recent alignment tends to occur in ${lowest.context} contexts. ${highest.context} contexts are showing stronger alignment.`;
+}
+
+function detectPersonalDriftTrigger(entries: Entry[]) {
+  if (entries.length < 6) {
+    return "Not enough alignment history yet to identify personal drift triggers.";
+  }
+
+  const recent = [...entries].slice(0, 10);
+
+  let highLoadDrift = 0;
+  let lowEnergyDrift = 0;
+  let emotionalDrift = 0;
+  let workDrift = 0;
+
+  for (const entry of recent) {
+    const score = computeCompassScore({
+      emotional_signal: entry.emotional_signal,
+      vital_energy: entry.vital_energy,
+      cognitive_load: entry.cognitive_load,
+    });
+
+    if (entry.cognitive_load >= 7 && score < 7) {
+      highLoadDrift++;
+    }
+
+    if (entry.vital_energy <= 5 && score < 7) {
+      lowEnergyDrift++;
+    }
+
+    if (entry.emotional_signal <= 5 && score < 7) {
+      emotionalDrift++;
+    }
+
+    if (entry.context === "Work" && score < 7) {
+      workDrift++;
+    }
+  }
+
+  if (highLoadDrift >= 3) {
+    return "Your alignment tends to weaken when cognitive load remains elevated.";
+  }
+
+  if (lowEnergyDrift >= 3) {
+    return "Lower vital energy repeatedly appears before alignment drift.";
+  }
+
+  if (emotionalDrift >= 3) {
+    return "Lower emotional signal often precedes alignment decline.";
+  }
+
+  if (workDrift >= 3) {
+    return "Work contexts appear frequently before alignment weakens.";
+  }
+
+  return "No clear personal drift trigger has emerged yet.";
+}
+
+function detectRecoverySignal(entries: Entry[]) {
+  if (entries.length < 6) {
+    return "Not enough alignment history yet to identify recovery signals.";
+  }
+
+  const recent = [...entries].slice(0, 10);
+
+  let lowLoadRecovery = 0;
+  let highEnergyRecovery = 0;
+  let emotionalRecovery = 0;
+  let homeRecovery = 0;
+
+  for (const entry of recent) {
+    const score = computeCompassScore({
+      emotional_signal: entry.emotional_signal,
+      vital_energy: entry.vital_energy,
+      cognitive_load: entry.cognitive_load,
+    });
+
+    if (entry.cognitive_load <= 4 && score >= 8) {
+      lowLoadRecovery++;
+    }
+
+    if (entry.vital_energy >= 7 && score >= 8) {
+      highEnergyRecovery++;
+    }
+
+    if (entry.emotional_signal >= 7 && score >= 8) {
+      emotionalRecovery++;
+    }
+
+    if (entry.context === "Home" && score >= 8) {
+      homeRecovery++;
+    }
+  }
+
+  if (lowLoadRecovery >= 3) {
+    return "Your alignment tends to recover when cognitive load stays low.";
+  }
+
+  if (highEnergyRecovery >= 3) {
+    return "Higher vital energy repeatedly appears during stronger alignment days.";
+  }
+
+  if (emotionalRecovery >= 3) {
+    return "Stronger emotional signal tends to accompany your recovery periods.";
+  }
+
+  if (homeRecovery >= 3) {
+    return "Home contexts appear repeatedly during stronger alignment states.";
+  }
+
+  return "No clear recovery signal has emerged yet.";
+}
+
+function detectContextRecoveryPattern(entries: Entry[]) {
+  if (entries.length < 6) {
+    return {
+      title: "Not enough data yet",
+      description: "More alignment history is needed to detect your recovery pattern.",
+    };
+  }
+
+  const recent = [...entries].slice(0, 10);
+
+  let lowLoadRecovery = 0;
+  let highEnergyRecovery = 0;
+  let emotionalRecovery = 0;
+  let homeRecovery = 0;
+  let soloRecovery = 0;
+
+  for (const entry of recent) {
+    const score = computeCompassScore({
+      emotional_signal: entry.emotional_signal,
+      vital_energy: entry.vital_energy,
+      cognitive_load: entry.cognitive_load,
+    });
+
+    if (score >= 8) {
+      if (entry.cognitive_load <= 4) lowLoadRecovery++;
+      if (entry.vital_energy >= 7) highEnergyRecovery++;
+      if (entry.emotional_signal >= 7) emotionalRecovery++;
+      if (entry.context === "Home") homeRecovery++;
+      if (entry.context === "Solo") soloRecovery++;
+    }
+  }
+
+  if (
+    lowLoadRecovery === 0 &&
+    highEnergyRecovery === 0 &&
+    emotionalRecovery === 0 &&
+    homeRecovery === 0 &&
+    soloRecovery === 0
+  ) {
+    return {
+      title: "Recovery pattern still forming",
+      description: "A clearer recovery pathway will appear after more strong-alignment days.",
+    };
+  }
+
+  const options = [
+    {
+      key: "lowLoadRecovery",
+      count: lowLoadRecovery,
+      title: "Structure + Simplicity",
+      description:
+        "Recovery tends to happen when mental load is reduced and the day feels more manageable.",
+    },
+    {
+      key: "highEnergyRecovery",
+      count: highEnergyRecovery,
+      title: "Action + Momentum",
+      description:
+        "Recovery tends to happen when your energy returns and forward movement becomes easier.",
+    },
+    {
+      key: "emotionalRecovery",
+      count: emotionalRecovery,
+      title: "Emotional Reset",
+      description:
+        "Recovery tends to happen when your emotional signal becomes stronger and steadier.",
+    },
+    {
+      key: "homeRecovery",
+      count: homeRecovery,
+      title: "Home + Reset Space",
+      description:
+        "Recovery tends to happen more often in home contexts where pressure appears lower.",
+    },
+    {
+      key: "soloRecovery",
+      count: soloRecovery,
+      title: "Solitude + Reflection",
+      description:
+        "Recovery tends to happen when you have space to slow down and recalibrate internally.",
+    },
+  ];
+
+  options.sort((a, b) => b.count - a.count);
+
+  return {
+    title: options[0].title,
+    description: options[0].description,
+  };
 }
 
 function detectNoteInsight(entries: Entry[]) {
@@ -933,6 +1134,20 @@ const driftTimeline = useMemo(
 
 const weeklyReview = useMemo(() => detectWeeklyReview(recentEntries), [recentEntries]);
 
+const personalDriftTrigger = useMemo(
+  () => detectPersonalDriftTrigger(recentEntries),
+  [recentEntries]
+);
+
+const recoverySignal = useMemo(
+  () => detectRecoverySignal(recentEntries),
+  [recentEntries]
+);
+
+const contextRecoveryPattern = useMemo(
+  () => detectContextRecoveryPattern(recentEntries),
+  [recentEntries]
+);
 
 const alignmentCardReport = useMemo(() => {
   if (!latest || recentEntries.length === 0) {
@@ -1043,6 +1258,39 @@ const alignmentStateDriftPrediction = driftProbability;
 
 const alignmentStateStability = alignmentStability ?? 0;
 
+let confidenceLevel = "Early signal";
+let confidenceTone = "text-white/60";
+
+if (recentEntries.length >= 7) {
+  confidenceLevel = "High";
+  confidenceTone = "text-emerald-300";
+} else if (recentEntries.length >= 3) {
+  confidenceLevel = "Moderate";
+  confidenceTone = "text-amber-200";
+}
+
+let trendLabel = "Stable";
+let trendIcon = "→";
+let trendTone = "text-white/60";
+
+if (trendScores.length >= 2) {
+  const latestScore = trendScores[trendScores.length - 1];
+  const previousScore = trendScores[trendScores.length - 2];
+
+  const delta = latestScore - previousScore;
+
+  if (delta >= 0.4) {
+    trendLabel = "Improving";
+    trendIcon = "↑";
+    trendTone = "text-emerald-300";
+  } else if (delta <= -0.4) {
+    trendLabel = "Declining";
+    trendIcon = "↓";
+    trendTone = "text-rose-300";
+  }
+}
+
+
 if (!mounted) {
   return null;
 }
@@ -1092,58 +1340,8 @@ if (!mounted) {
           </p>
         </div>
 
-                <div className="mt-8">
-          <AlignmentReportCard
-  report={
-    alignmentCardReport ?? {
-      score: 0,
-      previousAverageScore: null,
-      trendDelta: null,
-      status: "realigning",
-      topPositiveSignal: "Fallback report is rendering.",
-      topRisk: "Live report data is not available yet.",
-      recommendedAction: "Check dashboard data loading in production.",
-      summary: "Fallback summary",
-      generatedAt: "static-fallback",
-    }
-  }
-/>
-        </div>
-
-        
-
-        {showDriftAlert && (
-          <div className="mt-8 rounded-3xl border border-red-400/20 bg-red-400/10 p-6">
-            <div className="text-xs tracking-wide text-red-300">
-              DRIFT ALERT
-            </div>
-            <div className="mt-2 text-lg font-semibold text-white">
-              Your Compass Score dropped significantly.
-            </div>
-            <div className="mt-2 text-sm text-white/75">
-              Since your previous alignment, your score has fallen by{" "}
-              <span className="text-white">{scoreDrop?.toFixed(1)}</span> points.
-            </div>
-          </div>
-        )}
-
-        {/* Core signal */}
-        <div className="mt-10 rounded-3xl border border-white/10 bg-white/5 p-8">
-          <div className="text-xs tracking-wide text-white/60">
-            COMPASS SCORE
-          </div>
-
-          <div className={`mt-3 text-6xl font-semibold tracking-tight ${scoreColor}`}>
-          {loading ? "…" : score !== null && score !== undefined ? score.toFixed(1) : "—"}
-          </div>
-
-          <div className="mt-3 text-sm text-white/70">
-            {loading ? "Loading latest signal…" : drift?.status ?? "No signal yet."}
-          </div>
-        </div>
-
-                <div className="mt-6">
-          <AlignmentStateCard
+        <div className="mt-10 space-y-6">
+  <AlignmentStateCard
   compassScore={alignmentStateCompassScore}
   driftPrediction={alignmentStateDriftPrediction}
   stability={alignmentStateStability}
@@ -1151,44 +1349,21 @@ if (!mounted) {
   vitalEnergy={latest?.vital_energy ?? null}
   cognitiveLoad={latest?.cognitive_load ?? null}
   context={latest?.context ?? null}
+  showDriftAlert={showDriftAlert}
+  scoreDrop={scoreDrop}
+  confidenceLevel={confidenceLevel}
+  confidenceTone={confidenceTone}
+  trendLabel={trendLabel}
+  trendIcon={trendIcon}
+  trendTone={trendTone}
+  driftForecast={driftPrediction}
 />
-        </div>
-
-
-        <div className="mt-6 grid gap-4 sm:grid-cols-3">
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <div className="text-xs tracking-wide text-white/60">DRIFT STATUS</div>
-            <div className="mt-2 text-xl font-semibold">{drift?.status ?? "—"}</div>
-            <div className="mt-2 text-sm text-white/70">
-              {drift?.message ?? "No signal yet."}
-            </div>
-          </div>
-
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:col-span-2">
-            <div className="text-xs tracking-wide text-white/60">INTERPRETATION</div>
-            <div className="mt-2 text-sm text-white/80">
-              {loading
-                ? "Interpreting signal…"
-                : interpretation ?? "Log a check-in to receive interpretation."}
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-4 rounded-3xl border border-white/10 bg-white/5 p-6">
-  <div className="text-xs tracking-wide text-white/60">
-    TODAY'S GUIDANCE
-  </div>
-
-  <div className="mt-2 text-sm text-white/80">
-    {loading ? "Generating guidance..." : dailyGuidance}
-  </div>
 </div>
-
         
 
-        {/* Intelligence layer */}
+        {/* Forecast */}
         <div className="mt-10">
-          <div className="text-xs tracking-wide text-white/40">INTELLIGENCE</div>
+          <div className="text-xs tracking-wide text-white/40">FORECAST</div>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             
             <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
@@ -1237,15 +1412,6 @@ if (!mounted) {
   </div>
 </div>
 
-
-<div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-              <div className="text-xs tracking-wide text-white/60">SIGNAL DRIVER</div>
-              <div className="mt-2 text-sm text-white/80">
-                {loading ? "Identifying dominant driver…" : signalDriver}
-              </div>
-            </div>
-
-
 <div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:col-span-2">
   <div className="text-xs tracking-wide text-white/60">DRIFT TIMELINE</div>
 
@@ -1276,8 +1442,66 @@ if (!mounted) {
     {loading ? "Compiling weekly review..." : weeklyReview}
   </div>
 </div>
+</div>
+</div>
 
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+{/* Intelligence */}
+<div className="mt-10">
+  <div className="text-xs tracking-wide text-white/40">INTELLIGENCE</div>
+
+  <div className="mt-4 grid gap-4 sm:grid-cols-2">
+
+    {/* SIGNAL DRIVER */}
+    <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+              <div className="text-xs tracking-wide text-white/60">SIGNAL DRIVER</div>
+              <div className="mt-2 text-sm text-white/80">
+                {loading ? "Identifying dominant driver…" : signalDriver}
+              </div>
+            </div>
+
+    {/* PERSONAL DRIFT TRIGGER */}
+    <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+  <div className="text-xs tracking-wide text-white/60">
+    PERSONAL DRIFT TRIGGER
+  </div>
+
+  <div className="mt-2 text-sm text-white/80">
+    {loading ? "Analyzing drift triggers..." : personalDriftTrigger}
+  </div>
+</div>
+
+       {/* RECOVERY SIGNAL */}
+    <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+  <div className="text-xs tracking-wide text-white/60">
+    RECOVERY SIGNAL
+  </div>
+
+  <div className="mt-2 text-sm text-white/80">
+    {loading ? "Analyzing recovery patterns..." : recoverySignal}
+  </div>
+</div>
+
+{/* CONTEXT RECOVERY PATTERN */}
+<div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+  <div className="text-xs tracking-wide text-white/60">
+    CONTEXT RECOVERY PATTERN
+  </div>
+
+  <div className="mt-2 text-sm text-white/80">
+    {loading
+      ? "Detecting recovery pathway..."
+      : contextRecoveryPattern.title}
+  </div>
+
+  <div className="mt-2 text-xs leading-relaxed text-white/50">
+    {loading
+      ? "Reading what tends to restore alignment..."
+      : contextRecoveryPattern.description}
+  </div>
+</div>
+
+    {/* WEEKLY INSIGHT */}
+    <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
               <div className="text-xs tracking-wide text-white/60">WEEKLY INSIGHT</div>
               <div className="mt-2 text-sm text-white/80">
                 {loading ? "Analyzing weekly signal…" : weeklyInsight}
@@ -1285,28 +1509,43 @@ if (!mounted) {
             </div>
 
 
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+    {/* PATTERN INSIGHT */}
+    <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
               <div className="text-xs tracking-wide text-white/60">PATTERN INSIGHT</div>
               <div className="mt-2 text-sm text-white/80">
                 {loading ? "Detecting patterns…" : patternInsight}
               </div>
             </div>
 
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+
+    {/* CONTEXT INSIGHT */}
+    <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
               <div className="text-xs tracking-wide text-white/60">CONTEXT INSIGHT</div>
               <div className="mt-2 text-sm text-white/80">
                 {loading ? "Analyzing context patterns…" : contextInsight}
               </div>
             </div>
 
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:col-span-2">
+
+    {/* INSIGHT MEMORY */}
+    <div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:col-span-2">
               <div className="text-xs tracking-wide text-white/60">INSIGHT MEMORY</div>
               <div className="mt-2 text-sm text-white/80">
               {loading ? "Reviewing repeating patterns..." : insightMemory}
           </div>
         </div>
-          </div>
-        </div>
+
+
+    {/* NOTE INSIGHT */}
+    <div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:col-span-2">
+              <div className="text-xs tracking-wide text-white/60">NOTE INSIGHT</div>
+              <div className="mt-2 text-sm text-white/80">
+                {loading ? "Analyzing reflection notes…" : noteInsight}
+              </div>
+            </div>
+
+  </div>
+</div>
 
         {/* Secondary layer */}
         <div className="mt-10">
@@ -1385,12 +1624,7 @@ if (!mounted) {
               </div>
             </div>
 
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:col-span-2">
-              <div className="text-xs tracking-wide text-white/60">NOTE INSIGHT</div>
-              <div className="mt-2 text-sm text-white/80">
-                {loading ? "Analyzing reflection notes…" : noteInsight}
-              </div>
-            </div>
+            
 
             <div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:col-span-2">
               <div className="text-xs tracking-wide text-white/60">LATEST CHECK-IN</div>
