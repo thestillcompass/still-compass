@@ -613,6 +613,35 @@ function computeAlignmentStability(entries: Entry[]) {
   return stability;
 }
 
+function generatePersonalBaselineInsight(
+  currentScore: number | null,
+  baseline: number | null
+) {
+  if (currentScore === null || currentScore === undefined || baseline === null) {
+    return "Complete more daily alignments to build your personal baseline.";
+  }
+
+  const delta = currentScore - baseline;
+
+  if (delta >= 0.8) {
+    return "You are meaningfully above your normal alignment range today.";
+  }
+
+  if (delta >= 0.3) {
+    return "You are slightly above your personal baseline today.";
+  }
+
+  if (delta <= -0.8) {
+    return "You are meaningfully below your normal alignment range today.";
+  }
+
+  if (delta <= -0.3) {
+    return "You are slightly below your personal baseline today.";
+  }
+
+  return "Your current alignment is within your normal personal range.";
+}
+
 function generateDailyGuidance(
   latest: Entry | null,
   driftProbability: number,
@@ -832,6 +861,78 @@ function generateSignalNarrative(
 }
 
   return parts.join(" ");
+}
+
+
+function generateAlignmentTrajectory(entries: Entry[]) {
+  if (entries.length < 4) {
+    return "Not enough recent data to estimate alignment trajectory.";
+  }
+
+  const recent = [...entries].slice(0, 5).reverse();
+
+  const scores = recent.map((entry) =>
+    computeCompassScore({
+      emotional_signal: entry.emotional_signal,
+      vital_energy: entry.vital_energy,
+      cognitive_load: entry.cognitive_load,
+    })
+  );
+
+  const loads = recent.map((e) => e.cognitive_load);
+  const energy = recent.map((e) => e.vital_energy);
+
+  const scoreDelta = scores[scores.length - 1] - scores[0];
+
+  const risingLoad =
+    loads[loads.length - 3] <= loads[loads.length - 2] &&
+    loads[loads.length - 2] <= loads[loads.length - 1];
+
+  const fallingEnergy =
+    energy[energy.length - 3] >= energy[energy.length - 2] &&
+    energy[energy.length - 2] >= energy[energy.length - 1];
+
+  if (scoreDelta >= 0.8) {
+    return "Your alignment trajectory is improving. Recent signals suggest strengthening stability.";
+  }
+
+  if (scoreDelta <= -0.8) {
+    return "Alignment trajectory is weakening. Recent signals suggest increasing drift risk.";
+  }
+
+  if (risingLoad) {
+    return "Cognitive load is trending upward. If this continues, alignment may weaken in the next cycle.";
+  }
+
+  if (fallingEnergy) {
+    return "Vital energy is trending downward. Sustained decline may reduce alignment stability.";
+  }
+
+  return "Your alignment trajectory appears stable. No strong directional shift is visible in recent signals.";
+}
+
+function generateAlignmentBriefing(
+  score: number | null,
+  driftProbability: number,
+  stability: number | null
+) {
+  if (score === null || score === undefined) {
+    return "Log your alignment today to generate your daily briefing.";
+  }
+
+  if (score >= 8.5 && driftProbability < 30) {
+    return "Your alignment is strong today. Maintain your current rhythm.";
+  }
+
+  if (score >= 7 && driftProbability < 50) {
+    return "Your alignment is stable but slightly sensitive to disruption.";
+  }
+
+  if (score >= 6) {
+    return "Alignment is softening. A lighter cognitive load may restore clarity.";
+  }
+
+  return "Your signals indicate meaningful drift. Recovery space may be needed today.";
 }
 
 function generateDriftTimeline(entries: Entry[]) {
@@ -1063,6 +1164,56 @@ if (primaryDrag === "Emotional Signal") {
     strongestContext,
     riskContext,
     summary,
+  };
+}
+
+function detectEarlyDriftWarning(entries: Entry[]) {
+  if (entries.length < 4) {
+    return null;
+  }
+
+  const recent = [...entries].slice(0, 4).reverse();
+
+  const loads = recent.map((e) => e.cognitive_load);
+  const energy = recent.map((e) => e.vital_energy);
+
+  const risingLoad =
+    loads[0] <= loads[1] && loads[1] <= loads[2] && loads[2] <= loads[3];
+
+  const fallingEnergy =
+    energy[0] >= energy[1] && energy[1] >= energy[2] && energy[2] >= energy[3];
+
+  if (risingLoad) {
+    return "Cognitive load is rising across recent entries. Alignment may weaken if this trend continues.";
+  }
+
+  if (fallingEnergy) {
+    return "Vital energy has been declining across recent entries. This pattern often precedes drift.";
+  }
+
+  return null;
+}
+
+function detectSignalConfidence(entries: Entry[]) {
+  const count = entries.length;
+
+  if (count < 3) {
+    return {
+      level: "Early signal",
+      description: "More check-ins are needed before stronger pattern confidence is possible.",
+    };
+  }
+
+  if (count < 7) {
+    return {
+      level: "Moderate confidence",
+      description: "Patterns are beginning to form across recent entries, but more data will improve reliability.",
+    };
+  }
+
+  return {
+    level: "High confidence",
+    description: "Recent check-ins provide enough signal density for stronger pattern detection.",
   };
 }
 
@@ -1352,6 +1503,11 @@ const contextRecoveryPattern = useMemo(
   [recentEntries]
 );
 
+const earlyDriftWarning = useMemo(
+  () => detectEarlyDriftWarning(recentEntries),
+  [recentEntries]
+);
+
 const signalNarrative = useMemo(
   () =>
     generateSignalNarrative(
@@ -1372,63 +1528,20 @@ const signalNarrative = useMemo(
   ]
 );
 
-const alignmentCardReport = useMemo(() => {
-  if (!latest || recentEntries.length === 0) {
-    return null;
-  }
+const alignmentTrajectory = useMemo(
+  () => generateAlignmentTrajectory(recentEntries),
+  [recentEntries]
+);
 
-  const currentScore = computeCompassScore({
-    emotional_signal: latest.emotional_signal,
-    vital_energy: latest.vital_energy,
-    cognitive_load: latest.cognitive_load,
-  });
+const signalConfidence = useMemo(
+  () => detectSignalConfidence(recentEntries),
+  [recentEntries]
+);
 
-  const scores = recentEntries
-    .slice(0, 7)
-    .map((entry) =>
-      computeCompassScore({
-        emotional_signal: entry.emotional_signal,
-        vital_energy: entry.vital_energy,
-        cognitive_load: entry.cognitive_load,
-      })
-    );
-
-  const previousAvg =
-    scores.length > 1
-      ? scores.slice(1).reduce((sum, s) => sum + s, 0) / (scores.length - 1)
-      : null;
-
-  const trendDelta =
-    previousAvg !== null ? Number((currentScore - previousAvg).toFixed(2)) : null;
-
-  let status: "steady" | "realigning" | "slight_drift" | "off_course" = "steady";
-
-  if (currentScore >= 8.5) status = "steady";
-  else if (currentScore >= 7) status = "realigning";
-  else if (currentScore >= 6) status = "slight_drift";
-  else status = "off_course";
-
-  return {
-    score: Number((currentScore * 10).toFixed(0)),
-    previousAverageScore: previousAvg ? Number((previousAvg * 10).toFixed(0)) : null,
-    trendDelta: trendDelta ? Number((trendDelta * 10).toFixed(0)) : null,
-    status,
-    topPositiveSignal: patternInsight,
-    topRisk: driftPrediction,
-    recommendedAction: adjustment ?? "Complete tomorrow’s alignment check-in.",
-    summary: weeklyInsight,
-    generatedAt: new Date().toISOString(),
-  };
-}, [
-  latest,
-  recentEntries,
-  patternInsight,
-  driftPrediction,
-  weeklyInsight,
-  adjustment,
-]);
-
-  
+const alignmentBriefing = useMemo(
+  () => generateAlignmentBriefing(score ?? null, driftProbability, alignmentStability),
+  [score, driftProbability, alignmentStability]
+);
 
   const baselineScores = useMemo(() => {
     return [...recentEntries]
@@ -1451,6 +1564,11 @@ const alignmentCardReport = useMemo(() => {
     baseline !== null && score !== null && score !== undefined
       ? score - baseline
       : null;
+
+      const personalBaselineInsight = useMemo(
+  () => generatePersonalBaselineInsight(score ?? null, baseline),
+  [score, baseline]
+);
 
       const driftRiskColor =
   driftProbability >= 75
@@ -1563,53 +1681,85 @@ if (!mounted) {
           </p>
         </div>
 
-        <div className="mt-10 space-y-6">
-  <AlignmentStateCard
-  compassScore={alignmentStateCompassScore}
-  driftPrediction={alignmentStateDriftPrediction}
-  stability={alignmentStateStability}
-  emotionalSignal={latest?.emotional_signal ?? null}
-  vitalEnergy={latest?.vital_energy ?? null}
-  cognitiveLoad={latest?.cognitive_load ?? null}
-  context={latest?.context ?? null}
-  showDriftAlert={showDriftAlert}
-  scoreDrop={scoreDrop}
-  confidenceLevel={confidenceLevel}
-  confidenceTone={confidenceTone}
-  trendLabel={trendLabel}
-  trendIcon={trendIcon}
-  trendTone={trendTone}
-  driftForecast={driftPrediction}
-/>
-<div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-  <div className="text-xs tracking-wide text-white/60">
-    TODAY'S ADJUSTMENT
+        <div className="mt-10">
+  <div className="text-xs tracking-wide text-white/40">
+    COMMAND CENTER
   </div>
 
-  <div className="mt-2 text-sm text-white/80">
-    {loading
-      ? "Generating adjustment..."
-      : alignmentAdjustment}
-  </div>
-</div>
-<div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-  <div className="text-xs tracking-wide text-white/60">
-    DRIFT INTERVENTION
-  </div>
+  <div className="mt-4 grid gap-4 sm:grid-cols-2">
+    <div className="sm:col-span-2">
+      <AlignmentStateCard
+        compassScore={alignmentStateCompassScore}
+        driftPrediction={alignmentStateDriftPrediction}
+        stability={alignmentStateStability}
+        emotionalSignal={latest?.emotional_signal ?? null}
+        vitalEnergy={latest?.vital_energy ?? null}
+        cognitiveLoad={latest?.cognitive_load ?? null}
+        context={latest?.context ?? null}
+        showDriftAlert={showDriftAlert}
+        scoreDrop={scoreDrop}
+        confidenceLevel={confidenceLevel}
+        confidenceTone={confidenceTone}
+        trendLabel={trendLabel}
+        trendIcon={trendIcon}
+        trendTone={trendTone}
+        driftForecast={driftPrediction}
+        baselineInsight={personalBaselineInsight}
+      />
+    </div>
 
-  <div className="mt-2 text-sm text-white/80">
-    {loading ? "Generating intervention..." : driftIntervention}
-  </div>
-</div>
-<div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-  <div className="text-xs tracking-wide text-white/60">
-    SIGNAL NARRATIVE
-  </div>
+    {earlyDriftWarning && (
+      <div className="rounded-3xl border border-amber-400/30 bg-amber-400/10 p-6 sm:col-span-2">
+        <div className="text-xs tracking-wide text-amber-300">
+          EARLY DRIFT WARNING
+        </div>
 
-  <div className="mt-2 text-sm leading-relaxed text-white/80">
-    {loading ? "Generating narrative..." : signalNarrative}
+        <div className="mt-2 text-sm text-amber-100">
+          {earlyDriftWarning}
+        </div>
+      </div>
+    )}
+
+    <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+      <div className="text-xs tracking-wide text-white/60">
+        TODAY'S ADJUSTMENT
+      </div>
+
+      <div className="mt-2 text-sm text-white/80">
+        {loading ? "Generating adjustment..." : alignmentAdjustment}
+      </div>
+    </div>
+
+    <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+      <div className="text-xs tracking-wide text-white/60">
+        DRIFT INTERVENTION
+      </div>
+
+      <div className="mt-2 text-sm text-white/80">
+        {loading ? "Generating intervention..." : driftIntervention}
+      </div>
+    </div>
+
+    <div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:col-span-2">
+      <div className="text-xs tracking-wide text-white/60">
+        SIGNAL NARRATIVE
+      </div>
+
+      <div className="mt-2 text-sm leading-relaxed text-white/80">
+        {loading ? "Generating narrative..." : signalNarrative}
+      </div>
+    </div>
+
+    <div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:col-span-2">
+      <div className="text-xs tracking-wide text-white/60">
+        ALIGNMENT TRAJECTORY
+      </div>
+
+      <div className="mt-2 text-sm leading-relaxed text-white/80">
+        {loading ? "Estimating trajectory..." : alignmentTrajectory}
+      </div>
+    </div>
   </div>
-</div>
 </div>
 
         {/* Forecast */}
@@ -1653,6 +1803,22 @@ if (!mounted) {
       : alignmentStability >= 60
       ? "Your alignment signals are moderately stable."
       : "Your alignment signals appear volatile."}
+  </div>
+</div>
+
+<div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+  <div className="text-xs tracking-wide text-white/60">
+    SIGNAL CONFIDENCE
+  </div>
+
+  <div className="mt-2 text-sm text-white/80">
+    {loading ? "Evaluating confidence..." : signalConfidence.level}
+  </div>
+
+  <div className="mt-2 text-xs leading-relaxed text-white/50">
+    {loading
+      ? "Checking signal density..."
+      : signalConfidence.description}
   </div>
 </div>
 
@@ -1800,7 +1966,7 @@ if (!mounted) {
 
         {/* Secondary layer */}
         <div className="mt-10">
-          <div className="text-xs tracking-wide text-white/40">SECONDARY SIGNALS</div>
+          <div className="text-xs tracking-wide text-white/40">SUPPORTING SIGNALS</div>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
               <div className="text-xs tracking-wide text-white/60">PERSONAL BASELINE</div>
@@ -1818,10 +1984,10 @@ if (!mounted) {
                         : "—"}
                     </span>
                   </div>
-                  <div className="mt-2 text-sm text-white/80">{baselineMessage}</div>
+                  <div className="mt-2 text-sm text-white/80">{personalBaselineInsight}</div>
                 </>
               ) : (
-                <div className="mt-2 text-sm text-white/80">{baselineMessage}</div>
+                <div className="mt-2 text-sm text-white/80">{personalBaselineInsight}</div>
               )}
             </div>
 

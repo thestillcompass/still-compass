@@ -8,17 +8,16 @@ type AlignmentStateCardProps = {
   vitalEnergy?: number | null;
   cognitiveLoad?: number | null;
   context?: string | null;
-
   showDriftAlert?: boolean;
   scoreDrop?: number | null;
-
   confidenceLevel?: string;
   confidenceTone?: string;
-
   trendLabel?: string;
   trendIcon?: string;
   trendTone?: string;
   driftForecast?: string;
+  baselineInsight?: string;
+  alignmentBriefing?: string;
 };
 
 export default function AlignmentStateCard({
@@ -37,9 +36,9 @@ export default function AlignmentStateCard({
   trendIcon,
   trendTone,
   driftForecast,
-}: AlignmentStateCardProps)
-
-{
+  baselineInsight,
+  alignmentBriefing,
+}: AlignmentStateCardProps) {
   const state = getAlignmentState({
     compassScore,
     driftPrediction,
@@ -63,16 +62,16 @@ export default function AlignmentStateCard({
             </p>
 
             {trendLabel && (
-  <p className={`mt-1 text-xs tracking-wide ${trendTone}`}>
-    Trend: {trendLabel} {trendIcon}
-  </p>
-)}
+              <p className={`mt-1 text-xs tracking-wide ${trendTone}`}>
+                Trend: {trendLabel} {trendIcon}
+              </p>
+            )}
 
             {confidenceLevel && (
-  <p className={`mt-2 text-xs tracking-wide ${confidenceTone}`}>
-    Confidence: {confidenceLevel}
-  </p>
-)}
+              <p className={`mt-2 text-xs tracking-wide ${confidenceTone}`}>
+                Confidence: {confidenceLevel}
+              </p>
+            )}
           </div>
 
           <div
@@ -84,28 +83,33 @@ export default function AlignmentStateCard({
         </div>
       </div>
 
-{showDriftAlert && (
-  <div className="border-b border-red-400/20 bg-red-400/10 px-6 py-4 sm:px-8">
-    <p className="text-[11px] uppercase tracking-[0.2em] text-red-300">
-      Drift Alert
-    </p>
+      {showDriftAlert && (
+        <div className="border-b border-red-400/20 bg-red-400/10 px-6 py-4 sm:px-8">
+          <p className="text-[11px] uppercase tracking-[0.2em] text-red-300">
+            Drift Alert
+          </p>
 
-    <p className="mt-2 text-sm text-white/80">
-      Your Compass Score dropped by{" "}
-      <span className="font-semibold text-white">
-        {scoreDrop?.toFixed(1)}
-      </span>{" "}
-      points since your previous alignment.
-    </p>
-  </div>
-)}
-
+          <p className="mt-2 text-sm text-white/80">
+            Your Compass Score dropped by{" "}
+            <span className="font-semibold text-white">
+              {scoreDrop?.toFixed(1)}
+            </span>{" "}
+            points since your previous alignment.
+          </p>
+        </div>
+      )}
 
       <div className="px-6 py-6 sm:px-8 sm:py-8">
         <div className="max-w-3xl">
           <p className="text-xs uppercase tracking-[0.2em] text-white/45">
             Alignment State
           </p>
+
+          {alignmentBriefing && (
+            <p className="mt-3 text-sm text-white/80">
+              {alignmentBriefing}
+            </p>
+          )}
 
           <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
             {state.label}
@@ -114,6 +118,12 @@ export default function AlignmentStateCard({
           <p className="mt-4 max-w-2xl text-sm leading-7 text-white/72 sm:text-base">
             {state.description}
           </p>
+
+          {baselineInsight && (
+            <p className="mt-3 text-sm text-white/60">
+              {baselineInsight}
+            </p>
+          )}
         </div>
 
         <div className="mt-8 grid gap-4 lg:grid-cols-2">
@@ -130,15 +140,14 @@ export default function AlignmentStateCard({
         </div>
 
         <div className="mt-6 rounded-2xl border border-white/10 bg-black/20 p-4">
-  <p className="text-[11px] uppercase tracking-[0.16em] text-white/45">
-    Drift Forecast
-  </p>
+          <p className="text-[11px] uppercase tracking-[0.16em] text-white/45">
+            Drift Forecast
+          </p>
 
-  <p className="mt-3 text-sm leading-7 text-white/78">
-    {driftForecast}
-  </p>
-</div>
-
+          <p className="mt-3 text-sm leading-7 text-white/78">
+            {driftForecast}
+          </p>
+        </div>
 
         <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-3">
           <MetricCard
