@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 type ApplicationPlanRequestBody = {
   firstName?: string;
@@ -50,6 +50,7 @@ const pageUrl = body.pageUrl?.trim() || "";
         { status: 400 }
       );
     }
+    const supabaseAdmin = getSupabaseAdmin();
 
     const { error } = await supabaseAdmin
   .from("application_plan_leads")
