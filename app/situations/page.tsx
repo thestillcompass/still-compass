@@ -24,12 +24,11 @@ export default function SituationsPage() {
           </p>
 
           <h1 className="max-w-3xl text-4xl font-semibold tracking-tight text-[#23303D] md:text-6xl">
-            Start with what you’re carrying.
+            Where do you need God’s guidance today?
           </h1>
 
           <p className="mt-6 max-w-2xl text-xl leading-8 text-[#23303D]/75">
-            Browse biblical guidance by the real situation you are facing, not
-            by a reading plan or a topic list.
+            Choose the situation closest to what you are facing. Each guide brings together scripture, plain-language reflection, and one faithful next step.
           </p>
         </div>
       </section>
