@@ -30,6 +30,9 @@ export default function SituationsPage() {
           <p className="mt-6 max-w-2xl text-xl leading-8 text-[#23303D]/75">
             Choose the situation closest to what you are facing. Each guide brings together scripture, plain-language reflection, and one faithful next step.
           </p>
+          <p className="mt-4 text-sm font-medium text-[#2C3E50]/70">
+              New situations are being added regularly.
+          </p>
         </div>
       </section>
 

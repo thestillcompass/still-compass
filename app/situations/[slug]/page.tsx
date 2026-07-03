@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import SiteHeader from "@/components/SiteHeader";
@@ -19,7 +20,9 @@ export async function generateStaticParams() {
   }));
 }
 
-export async function generateMetadata({ params }: SituationPageProps) {
+export async function generateMetadata({
+  params,
+}: SituationPageProps): Promise<Metadata> {
   const { slug } = await params;
   const situation = getSituationBySlug(slug);
 
@@ -32,6 +35,28 @@ export async function generateMetadata({ params }: SituationPageProps) {
   return {
     title: situation.metaTitle,
     description: situation.metaDescription,
+    openGraph: {
+      title: situation.metaTitle,
+      description: situation.metaDescription,
+      url: `https://thestillcompass.com/situations/${situation.slug}`,
+      siteName: "The Still Compass",
+      images: [
+        {
+          url: "https://thestillcompass.com/still-compass-logo.png",
+          width: 1200,
+          height: 630,
+          alt: "The Still Compass",
+        },
+      ],
+      locale: "en_US",
+      type: "article",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: situation.metaTitle,
+      description: situation.metaDescription,
+      images: ["https://thestillcompass.com/still-compass-logo.png"],
+    },
   };
 }
 

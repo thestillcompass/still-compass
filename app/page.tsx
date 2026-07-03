@@ -201,7 +201,7 @@ export default function HomePage() {
             },
             {
               title: "Keep the plan",
-              text: "Download a printable application plan you can return to.",
+              text: "Save your reflection privately so you can return to it later.",
             },
           ].map((item, index) => (
             <div
