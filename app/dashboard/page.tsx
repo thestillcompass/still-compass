@@ -19,9 +19,24 @@ type JournalEntry = {
   updated_at: string;
 };
 
+type AnsweredPrayer = {
+  id: string;
+  user_id: string;
+  journal_entry_id: string | null;
+  situation_slug: string;
+  situation_title: string;
+  title: string | null;
+  testimony: string | null;
+  answered_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 type DashboardStatus = "loading" | "signed-out" | "ready" | "error";
 
-function formatDate(dateString: string) {
+function formatDate(dateString: string | null) {
+  if (!dateString) return "";
+
   return new Intl.DateTimeFormat("en", {
     day: "numeric",
     month: "short",
@@ -32,52 +47,96 @@ function formatDate(dateString: string) {
 export default function DashboardPage() {
   const [status, setStatus] = useState<DashboardStatus>("loading");
   const [email, setEmail] = useState("");
+  const [userId, setUserId] = useState("");
+
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
+  const [answeredPrayers, setAnsweredPrayers] = useState<AnsweredPrayer[]>([]);
+
   const [errorMessage, setErrorMessage] = useState("");
 
-  useEffect(() => {
-    async function loadDashboard() {
-      setStatus("loading");
-      setErrorMessage("");
+  const [activeAnswerEntryId, setActiveAnswerEntryId] = useState<string | null>(
+    null
+  );
+  const [answerTitle, setAnswerTitle] = useState("");
+  const [answerTestimony, setAnswerTestimony] = useState("");
+  const [answerDate, setAnswerDate] = useState(
+    new Date().toISOString().slice(0, 10)
+  );
+  const [answerStatus, setAnswerStatus] = useState<
+    "idle" | "loading" | "saved" | "error"
+  >("idle");
+  const [answerMessage, setAnswerMessage] = useState("");
 
-      const {
-        data: { user },
-        error: userError,
-      } = await supabaseClient.auth.getUser();
+  async function loadDashboard() {
+    setStatus("loading");
+    setErrorMessage("");
 
-      if (userError) {
-        console.error(userError);
-        setStatus("error");
-        setErrorMessage("We could not load your account. Please try again.");
-        return;
-      }
+    const {
+      data: { user },
+      error: userError,
+    } = await supabaseClient.auth.getUser();
 
-      if (!user) {
-        setStatus("signed-out");
-        return;
-      }
-
-      setEmail(user.email || "");
-
-      const { data, error } = await supabaseClient
-        .from("journal_entries")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("updated_at", { ascending: false });
-
-      if (error) {
-        console.error(error);
-        setStatus("error");
-        setErrorMessage("We could not load your saved reflections.");
-        return;
-      }
-
-      setJournalEntries(data || []);
-      setStatus("ready");
+    if (userError) {
+      console.error(userError);
+      setStatus("error");
+      setErrorMessage("We could not load your account. Please try again.");
+      return;
     }
 
+    if (!user) {
+      setStatus("signed-out");
+      return;
+    }
+
+    setUserId(user.id);
+    setEmail(user.email || "");
+
+    const { data: journalData, error: journalError } = await supabaseClient
+      .from("journal_entries")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("updated_at", { ascending: false });
+
+    if (journalError) {
+      console.error(journalError);
+      setStatus("error");
+      setErrorMessage("We could not load your saved reflections.");
+      return;
+    }
+
+    const { data: answeredData, error: answeredError } = await supabaseClient
+      .from("answered_prayers")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("answered_at", { ascending: false });
+
+    if (answeredError) {
+      console.error(answeredError);
+      setStatus("error");
+      setErrorMessage("We could not load your answered prayers.");
+      return;
+    }
+
+    setJournalEntries(journalData || []);
+    setAnsweredPrayers(answeredData || []);
+    setStatus("ready");
+  }
+
+  useEffect(() => {
     loadDashboard();
   }, []);
+
+  const answeredByJournalEntryId = useMemo(() => {
+    const map = new Map<string, AnsweredPrayer>();
+
+    answeredPrayers.forEach((answeredPrayer) => {
+      if (answeredPrayer.journal_entry_id) {
+        map.set(answeredPrayer.journal_entry_id, answeredPrayer);
+      }
+    });
+
+    return map;
+  }, [answeredPrayers]);
 
   const groupedEntries = useMemo(() => {
     const groups = new Map<string, JournalEntry[]>();
@@ -100,7 +159,104 @@ export default function DashboardPage() {
     await supabaseClient.auth.signOut();
     setStatus("signed-out");
     setEmail("");
+    setUserId("");
     setJournalEntries([]);
+    setAnsweredPrayers([]);
+  }
+
+  function openAnswerForm(entry: JournalEntry) {
+    const existingAnswer = answeredByJournalEntryId.get(entry.id);
+
+    setActiveAnswerEntryId(entry.id);
+    setAnswerStatus("idle");
+    setAnswerMessage("");
+
+    if (existingAnswer) {
+      setAnswerTitle(existingAnswer.title || "");
+      setAnswerTestimony(existingAnswer.testimony || "");
+      setAnswerDate(
+        existingAnswer.answered_at ||
+          new Date().toISOString().slice(0, 10)
+      );
+    } else {
+      setAnswerTitle("");
+      setAnswerTestimony("");
+      setAnswerDate(new Date().toISOString().slice(0, 10));
+    }
+  }
+
+  function closeAnswerForm() {
+    setActiveAnswerEntryId(null);
+    setAnswerTitle("");
+    setAnswerTestimony("");
+    setAnswerDate(new Date().toISOString().slice(0, 10));
+    setAnswerStatus("idle");
+    setAnswerMessage("");
+  }
+
+  async function saveAnsweredPrayer(entry: JournalEntry) {
+    if (!userId) {
+      setAnswerStatus("error");
+      setAnswerMessage("Please sign in again before saving.");
+      return;
+    }
+
+    if (!answerTestimony.trim()) {
+      setAnswerStatus("error");
+      setAnswerMessage("Write a short note about what God has done.");
+      return;
+    }
+
+    setAnswerStatus("loading");
+    setAnswerMessage("");
+
+    const payload = {
+      user_id: userId,
+      journal_entry_id: entry.id,
+      situation_slug: entry.situation_slug,
+      situation_title: entry.situation_title,
+      title: answerTitle.trim() || "Answered prayer",
+      testimony: answerTestimony.trim(),
+      answered_at: answerDate,
+      updated_at: new Date().toISOString(),
+    };
+
+    const existingAnswer = answeredByJournalEntryId.get(entry.id);
+
+    if (existingAnswer) {
+      const { error } = await supabaseClient
+        .from("answered_prayers")
+        .update(payload)
+        .eq("id", existingAnswer.id)
+        .eq("user_id", userId);
+
+      if (error) {
+        console.error(error);
+        setAnswerStatus("error");
+        setAnswerMessage("This could not be saved. Please try again.");
+        return;
+      }
+    } else {
+      const { error } = await supabaseClient
+        .from("answered_prayers")
+        .insert(payload);
+
+      if (error) {
+        console.error(error);
+        setAnswerStatus("error");
+        setAnswerMessage("This could not be saved. Please try again.");
+        return;
+      }
+    }
+
+    setAnswerStatus("saved");
+    setAnswerMessage("Saved. This is now part of what God has brought you through.");
+
+    await loadDashboard();
+
+    setTimeout(() => {
+      closeAnswerForm();
+    }, 900);
   }
 
   return (
@@ -121,7 +277,7 @@ export default function DashboardPage() {
 
               <p className="mt-6 max-w-2xl text-xl leading-8 text-[#23303D]/75">
                 Your saved reflections, the situations you are walking through,
-                and the reminders you may need again.
+                and the reminders of what God has already brought you through.
               </p>
             </div>
 
@@ -213,7 +369,7 @@ export default function DashboardPage() {
               </div>
             ) : (
               <>
-                <div className="grid gap-4 md:grid-cols-3">
+                <div className="grid gap-4 md:grid-cols-4">
                   <div className="rounded-3xl border border-[#C89B3C]/20 bg-[#FFFDF9] p-6 shadow-sm">
                     <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#C89B3C]">
                       Reflections
@@ -234,6 +390,15 @@ export default function DashboardPage() {
 
                   <div className="rounded-3xl border border-[#C89B3C]/20 bg-[#FFFDF9] p-6 shadow-sm">
                     <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#C89B3C]">
+                      Answered
+                    </p>
+                    <p className="mt-3 text-4xl font-semibold text-[#2C3E50]">
+                      {answeredPrayers.length}
+                    </p>
+                  </div>
+
+                  <div className="rounded-3xl border border-[#C89B3C]/20 bg-[#FFFDF9] p-6 shadow-sm">
+                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#C89B3C]">
                       Latest
                     </p>
                     <p className="mt-3 text-lg font-semibold text-[#2C3E50]">
@@ -241,6 +406,55 @@ export default function DashboardPage() {
                     </p>
                   </div>
                 </div>
+
+                {answeredPrayers.length > 0 && (
+                  <section className="rounded-[2rem] border border-[#C89B3C]/25 bg-[#FFFDF9] p-6 shadow-sm md:p-8">
+                    <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[#C89B3C]">
+                      What God has brought me through
+                    </p>
+
+                    <h2 className="mt-2 text-3xl font-semibold tracking-tight text-[#2C3E50]">
+                      Answered prayers and reminders
+                    </h2>
+
+                    <div className="mt-6 space-y-4">
+                      {answeredPrayers.map((answeredPrayer) => (
+                        <div
+                          key={answeredPrayer.id}
+                          className="rounded-3xl bg-[#FAF6F1] p-5"
+                        >
+                          <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                            <div>
+                              <h3 className="text-xl font-semibold text-[#2C3E50]">
+                                {answeredPrayer.title || "Answered prayer"}
+                              </h3>
+
+                              <p className="mt-1 text-sm text-[#23303D]/60">
+                                {answeredPrayer.situation_title}
+                                {answeredPrayer.answered_at
+                                  ? ` · ${formatDate(answeredPrayer.answered_at)}`
+                                  : ""}
+                              </p>
+                            </div>
+
+                            <Link
+                              href={`/situations/${answeredPrayer.situation_slug}`}
+                              className="text-sm font-semibold text-[#2C3E50] underline-offset-4 hover:underline"
+                            >
+                              Revisit
+                            </Link>
+                          </div>
+
+                          {answeredPrayer.testimony && (
+                            <p className="mt-4 leading-7 text-[#23303D]/80">
+                              {answeredPrayer.testimony}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                )}
 
                 <section>
                   <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
@@ -290,40 +504,147 @@ export default function DashboardPage() {
                         </div>
 
                         <div className="mt-6 space-y-4">
-                          {group.entries.map((entry) => (
-                            <div
-                              key={entry.id}
-                              className="rounded-3xl bg-[#FAF6F1] p-5"
-                            >
-                              <p className="mb-3 text-sm font-semibold text-[#C89B3C]">
-                                {formatDate(entry.updated_at)}
-                              </p>
+                          {group.entries.map((entry) => {
+                            const answeredPrayer =
+                              answeredByJournalEntryId.get(entry.id);
+                            const isAnswerFormOpen =
+                              activeAnswerEntryId === entry.id;
 
-                              {entry.reflection_1 && (
-                                <p className="mb-3 leading-7 text-[#23303D]/80">
-                                  {entry.reflection_1}
-                                </p>
-                              )}
+                            return (
+                              <div
+                                key={entry.id}
+                                className="rounded-3xl bg-[#FAF6F1] p-5"
+                              >
+                                <div className="mb-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                                  <p className="text-sm font-semibold text-[#C89B3C]">
+                                    {formatDate(entry.updated_at)}
+                                  </p>
 
-                              {entry.reflection_2 && (
-                                <p className="mb-3 leading-7 text-[#23303D]/80">
-                                  {entry.reflection_2}
-                                </p>
-                              )}
+                                  <button
+                                    type="button"
+                                    onClick={() => openAnswerForm(entry)}
+                                    className="rounded-full border border-[#C89B3C]/40 px-4 py-2 text-sm font-semibold text-[#2C3E50] transition hover:border-[#C89B3C] hover:bg-[#FFFDF9]"
+                                  >
+                                    {answeredPrayer
+                                      ? "Edit answered prayer"
+                                      : "Mark as answered"}
+                                  </button>
+                                </div>
 
-                              {entry.reflection_3 && (
-                                <p className="mb-3 leading-7 text-[#23303D]/80">
-                                  {entry.reflection_3}
-                                </p>
-                              )}
+                                {entry.reflection_1 && (
+                                  <p className="mb-3 leading-7 text-[#23303D]/80">
+                                    {entry.reflection_1}
+                                  </p>
+                                )}
 
-                              {entry.note && (
-                                <p className="leading-7 text-[#23303D]/80">
-                                  {entry.note}
-                                </p>
-                              )}
-                            </div>
-                          ))}
+                                {entry.reflection_2 && (
+                                  <p className="mb-3 leading-7 text-[#23303D]/80">
+                                    {entry.reflection_2}
+                                  </p>
+                                )}
+
+                                {entry.reflection_3 && (
+                                  <p className="mb-3 leading-7 text-[#23303D]/80">
+                                    {entry.reflection_3}
+                                  </p>
+                                )}
+
+                                {entry.note && (
+                                  <p className="leading-7 text-[#23303D]/80">
+                                    {entry.note}
+                                  </p>
+                                )}
+
+                                {isAnswerFormOpen && (
+                                  <div className="mt-5 rounded-3xl border border-[#C89B3C]/25 bg-[#FFFDF9] p-5">
+                                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#C89B3C]">
+                                      Remember this
+                                    </p>
+
+                                    <h4 className="mt-2 text-2xl font-semibold text-[#2C3E50]">
+                                      What has God done here?
+                                    </h4>
+
+                                    <div className="mt-5 space-y-4">
+                                      <label className="block">
+                                        <span className="mb-2 block text-sm font-medium text-[#2C3E50]">
+                                          Title
+                                        </span>
+                                        <input
+                                          type="text"
+                                          value={answerTitle}
+                                          onChange={(event) =>
+                                            setAnswerTitle(event.target.value)
+                                          }
+                                          placeholder="Answered prayer"
+                                          className="w-full rounded-2xl border border-[#2C3E50]/15 bg-white px-4 py-3 text-[#23303D] outline-none focus:border-[#C89B3C]"
+                                        />
+                                      </label>
+
+                                      <label className="block">
+                                        <span className="mb-2 block text-sm font-medium text-[#2C3E50]">
+                                          Date answered
+                                        </span>
+                                        <input
+                                          type="date"
+                                          value={answerDate}
+                                          onChange={(event) =>
+                                            setAnswerDate(event.target.value)
+                                          }
+                                          className="w-full rounded-2xl border border-[#2C3E50]/15 bg-white px-4 py-3 text-[#23303D] outline-none focus:border-[#C89B3C]"
+                                        />
+                                      </label>
+
+                                      <label className="block">
+                                        <span className="mb-2 block text-sm font-medium text-[#2C3E50]">
+                                          What changed? What do you want to
+                                          remember?
+                                        </span>
+                                        <textarea
+                                          value={answerTestimony}
+                                          onChange={(event) =>
+                                            setAnswerTestimony(
+                                              event.target.value
+                                            )
+                                          }
+                                          rows={5}
+                                          placeholder="Write a few lines about what God did, what changed, or what you want your future self to remember."
+                                          className="w-full rounded-2xl border border-[#2C3E50]/15 bg-white px-4 py-3 text-[#23303D] outline-none focus:border-[#C89B3C]"
+                                        />
+                                      </label>
+                                    </div>
+
+                                    {answerMessage && (
+                                      <p className="mt-4 rounded-2xl bg-[#FAF6F1] px-4 py-3 text-sm text-[#23303D]/80">
+                                        {answerMessage}
+                                      </p>
+                                    )}
+
+                                    <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+                                      <button
+                                        type="button"
+                                        onClick={() => saveAnsweredPrayer(entry)}
+                                        disabled={answerStatus === "loading"}
+                                        className="rounded-full bg-[#2C3E50] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#23303D] disabled:cursor-not-allowed disabled:opacity-60"
+                                      >
+                                        {answerStatus === "loading"
+                                          ? "Saving..."
+                                          : "Save answered prayer"}
+                                      </button>
+
+                                      <button
+                                        type="button"
+                                        onClick={closeAnswerForm}
+                                        className="rounded-full border border-[#2C3E50]/20 px-6 py-3 text-sm font-semibold text-[#2C3E50] transition hover:bg-[#FAF6F1]"
+                                      >
+                                        Cancel
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     ))}
