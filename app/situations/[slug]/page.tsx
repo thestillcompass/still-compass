@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
-import ApplicationPlanForm from "@/components/ApplicationPlanForm";
 import JournalPrompt from "@/components/JournalPrompt";
 import { getAllSituations, getSituationBySlug } from "@/data/situations";
 
@@ -81,18 +80,18 @@ export default async function SituationPage({ params }: SituationPageProps) {
 
           <div className="mt-9 flex flex-col gap-3 sm:flex-row">
             <a
-              href="#application-plan"
+              href="#reflection"
               className="rounded-full bg-[#2C3E50] px-6 py-3 text-center text-sm font-semibold text-white transition hover:opacity-90"
             >
-              {situation.heroCta}
+              Write your reflection
             </a>
 
-            <a
-              href="#reflection"
+            <Link
+              href="/situations"
               className="rounded-full border border-[#C89B3C]/50 px-6 py-3 text-center text-sm font-semibold text-[#23303D] transition hover:border-[#C89B3C]"
             >
-              {situation.secondaryCta}
-            </a>
+              Browse other situations
+            </Link>
           </div>
         </div>
       </section>
@@ -145,44 +144,13 @@ export default async function SituationPage({ params }: SituationPageProps) {
           </div>
         </section>
 
-        <JournalPrompt
-  situationSlug={situation.slug}
-  situationTitle={situation.title}
-  reflectionQuestions={situation.reflectionQuestions}
-/>
-
-        {/* Application Plan */}
-        <section
-          id="application-plan"
-          className="mb-16 rounded-3xl border border-[#C89B3C]/30 bg-[#FFFDF9] p-6 md:p-8"
-        >
-          <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-[#C89B3C]">
-            Printable application plan
-          </p>
-
-          <h2 className="mb-4 text-3xl font-semibold tracking-tight">
-            {situation.applicationPlan.title}
-          </h2>
-
-          <p className="mb-6 text-lg leading-8 text-[#23303D]/75">
-            {situation.applicationPlan.description}
-          </p>
-
-          <ul className="mb-8 space-y-3">
-            {situation.applicationPlan.includes.map((item) => (
-              <li key={item} className="flex gap-3 text-[#23303D]/80">
-                <span className="mt-1 text-[#C89B3C]">•</span>
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-
-          <ApplicationPlanForm
-          situationSlug={situation.slug}
-          situationTitle={situation.title}
-          planTitle={situation.applicationPlan.title}
-          buttonText={situation.applicationPlan.cta}
-        />
+        {/* Reflection / Journal */}
+        <section id="reflection" className="mb-16 scroll-mt-24">
+          <JournalPrompt
+            situationSlug={situation.slug}
+            situationTitle={situation.title}
+            reflectionQuestions={situation.reflectionQuestions}
+          />
         </section>
 
         {/* Related Situations */}
@@ -232,6 +200,7 @@ export default async function SituationPage({ params }: SituationPageProps) {
           </p>
         </section>
       </article>
+
       <SiteFooter />
     </main>
   );

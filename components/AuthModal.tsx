@@ -36,9 +36,13 @@ export default function AuthModal({
     setStatus("loading");
     setMessage("");
 
-    const callbackUrl =
-      redirectTo ||
-      `${window.location.origin}${window.location.pathname}`;
+    const currentPath = `${window.location.pathname}${window.location.search}`;
+
+const callbackUrl =
+  redirectTo ||
+  `${window.location.origin}/auth/callback?next=${encodeURIComponent(
+    currentPath
+  )}`;
 
     const { error } = await supabaseClient.auth.signInWithOtp({
       email: cleanEmail,

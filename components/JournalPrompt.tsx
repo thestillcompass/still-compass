@@ -1,8 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import AuthModal from "@/components/AuthModal";
 import { supabaseClient } from "@/lib/supabaseClient";
+
+type JournalDraft = {
+  reflection1: string;
+  reflection2: string;
+  reflection3: string;
+  note: string;
+};
 
 type JournalPromptProps = {
   situationSlug: string;
@@ -19,13 +26,106 @@ export default function JournalPrompt({
   const [reflection2, setReflection2] = useState("");
   const [reflection3, setReflection3] = useState("");
   const [note, setNote] = useState("");
+
   const [journalEntryId, setJournalEntryId] = useState<string | null>(null);
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+
   const [status, setStatus] = useState<
     "idle" | "loading" | "saved" | "error"
   >("idle");
   const [message, setMessage] = useState("");
+
+  const hasHandledDraftAfterLogin = useRef(false);
+
+  const draftStorageKey = useMemo(
+    () => `still-compass-journal-draft-${situationSlug}`,
+    [situationSlug]
+  );
+
+  function getCurrentDraft(): JournalDraft {
+    return {
+      reflection1,
+      reflection2,
+      reflection3,
+      note,
+    };
+  }
+
+  function applyDraftToState(draft: JournalDraft) {
+    setReflection1(draft.reflection1 || "");
+    setReflection2(draft.reflection2 || "");
+    setReflection3(draft.reflection3 || "");
+    setNote(draft.note || "");
+  }
+
+  function saveDraftLocally() {
+    if (typeof window === "undefined") return;
+
+    const draft = getCurrentDraft();
+
+    localStorage.setItem(draftStorageKey, JSON.stringify(draft));
+  }
+
+  function getLocalDraft(): JournalDraft | null {
+    if (typeof window === "undefined") return null;
+
+    const savedDraft = localStorage.getItem(draftStorageKey);
+
+    if (!savedDraft) return null;
+
+    try {
+      return JSON.parse(savedDraft) as JournalDraft;
+    } catch {
+      localStorage.removeItem(draftStorageKey);
+      return null;
+    }
+  }
+
+  function clearLocalDraft() {
+    if (typeof window === "undefined") return;
+
+    localStorage.removeItem(draftStorageKey);
+  }
+
+  async function saveJournalEntry(userId: string, draft: JournalDraft) {
+    const payload = {
+      user_id: userId,
+      situation_slug: situationSlug,
+      situation_title: situationTitle,
+      reflection_1: draft.reflection1,
+      reflection_2: draft.reflection2,
+      reflection_3: draft.reflection3,
+      note: draft.note,
+      updated_at: new Date().toISOString(),
+    };
+
+    if (journalEntryId) {
+      const { error } = await supabaseClient
+        .from("journal_entries")
+        .update(payload)
+        .eq("id", journalEntryId)
+        .eq("user_id", userId);
+
+      if (error) {
+        throw error;
+      }
+
+      return journalEntryId;
+    }
+
+    const { data, error } = await supabaseClient
+      .from("journal_entries")
+      .insert(payload)
+      .select("id")
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return data.id as string;
+  }
 
   useEffect(() => {
     async function loadUserAndEntry() {
@@ -35,6 +135,16 @@ export default function JournalPrompt({
 
       if (!user) {
         setIsSignedIn(false);
+
+        const localDraft = getLocalDraft();
+
+        if (localDraft) {
+          applyDraftToState(localDraft);
+          setMessage(
+            "Your unsaved reflection is still here. Sign in to save it privately."
+          );
+        }
+
         return;
       }
 
@@ -51,6 +161,8 @@ export default function JournalPrompt({
 
       if (error) {
         console.error(error);
+        setStatus("error");
+        setMessage("We could not load your saved reflection.");
         return;
       }
 
@@ -60,6 +172,33 @@ export default function JournalPrompt({
         setReflection2(data.reflection_2 || "");
         setReflection3(data.reflection_3 || "");
         setNote(data.note || "");
+      }
+
+      const localDraft = getLocalDraft();
+
+      if (localDraft && !hasHandledDraftAfterLogin.current) {
+        hasHandledDraftAfterLogin.current = true;
+
+        applyDraftToState(localDraft);
+
+        try {
+          setStatus("loading");
+          setMessage("Saving your reflection...");
+
+          const savedId = await saveJournalEntry(user.id, localDraft);
+
+          setJournalEntryId(savedId);
+          clearLocalDraft();
+
+          setStatus("saved");
+          setMessage("Saved. You can come back to this in My Compass.");
+        } catch (saveError) {
+          console.error(saveError);
+          setStatus("error");
+          setMessage(
+            "You are signed in, but your reflection could not be saved. Please try again."
+          );
+        }
       }
     }
 
@@ -74,68 +213,55 @@ export default function JournalPrompt({
     return () => {
       subscription.unsubscribe();
     };
-  }, [situationSlug]);
+  }, [draftStorageKey, situationSlug, situationTitle]);
 
   async function handleSave() {
     setStatus("idle");
     setMessage("");
+
+    const draft = getCurrentDraft();
+
+    const hasAnyWriting =
+      draft.reflection1.trim() ||
+      draft.reflection2.trim() ||
+      draft.reflection3.trim() ||
+      draft.note.trim();
+
+    if (!hasAnyWriting) {
+      setStatus("error");
+      setMessage("Write a reflection first, then save it.");
+      return;
+    }
 
     const {
       data: { user },
     } = await supabaseClient.auth.getUser();
 
     if (!user) {
+      saveDraftLocally();
       setAuthModalOpen(true);
+      setMessage(
+        "Your reflection is held safely on this device. Sign in to save it privately."
+      );
       return;
     }
 
     setIsSignedIn(true);
     setStatus("loading");
 
-    const payload = {
-      user_id: user.id,
-      situation_slug: situationSlug,
-      situation_title: situationTitle,
-      reflection_1: reflection1,
-      reflection_2: reflection2,
-      reflection_3: reflection3,
-      note,
-      updated_at: new Date().toISOString(),
-    };
+    try {
+      const savedId = await saveJournalEntry(user.id, draft);
 
-    if (journalEntryId) {
-      const { error } = await supabaseClient
-        .from("journal_entries")
-        .update(payload)
-        .eq("id", journalEntryId)
-        .eq("user_id", user.id);
-
-      if (error) {
-        setStatus("error");
-        setMessage("Your reflection could not be saved. Please try again.");
-        return;
-      }
+      setJournalEntryId(savedId);
+      clearLocalDraft();
 
       setStatus("saved");
       setMessage("Saved. You can come back to this in My Compass.");
-      return;
-    }
-
-    const { data, error } = await supabaseClient
-      .from("journal_entries")
-      .insert(payload)
-      .select("id")
-      .single();
-
-    if (error) {
+    } catch (error) {
+      console.error(error);
       setStatus("error");
       setMessage("Your reflection could not be saved. Please try again.");
-      return;
     }
-
-    setJournalEntryId(data.id);
-    setStatus("saved");
-    setMessage("Saved. You can come back to this in My Compass.");
   }
 
   return (
