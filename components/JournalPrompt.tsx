@@ -344,10 +344,11 @@ export default function JournalPrompt({
         </button>
 
         {!isSignedIn && (
-          <p className="text-sm leading-6 text-[#23303D]/65">
-            No password needed. We’ll send you a private sign-in link.
-          </p>
-        )}
+  <div className="space-y-1 text-sm leading-6 text-[#23303D]/65">
+    <p>No password needed. We’ll send you a private sign-in link.</p>
+    <p>Your reflections are private and only visible to you.</p>
+  </div>
+)}
       </div>
 
       {message && (

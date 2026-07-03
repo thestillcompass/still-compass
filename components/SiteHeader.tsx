@@ -29,6 +29,10 @@ export default function SiteHeader() {
             Situations
           </Link>
 
+          <Link href="/about" className="hover:text-[#23303D]">
+            About
+          </Link>
+
           <Link
             href="/dashboard"
             className="rounded-full border border-[#C89B3C]/40 px-4 py-2 font-semibold text-[#2C3E50] transition hover:border-[#C89B3C] hover:bg-[#FFFDF9]"

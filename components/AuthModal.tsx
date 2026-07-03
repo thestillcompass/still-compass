@@ -87,9 +87,14 @@ const callbackUrl =
         {status !== "sent" ? (
           <form onSubmit={handleMagicLinkSubmit} className="space-y-4">
             <p className="leading-7 text-[#23303D]/80">
-              Enter your email and we’ll send you a private sign-in link. No
-              password needed.
-            </p>
+  Enter your email and we’ll send you a private sign-in link. Your
+  reflection will be saved to your own account, so you can come back to
+  it later.
+</p>
+
+<p className="mt-3 text-sm leading-6 text-[#23303D]/65">
+  Your reflections are private and only visible to you.
+</p>
 
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-[#2C3E50]">
