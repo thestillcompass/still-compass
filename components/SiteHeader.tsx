@@ -15,18 +15,25 @@ export default function SiteHeader() {
             priority
           />
 
-          <span className="text-lg font-semibold tracking-tight">
+          <span className="text-lg font-semibold tracking-tight text-[#23303D]">
             The Still Compass
           </span>
         </Link>
 
         <nav className="flex items-center gap-5 text-sm text-[#23303D]/75">
+          <Link href="/" className="hover:text-[#23303D]">
+            Home
+          </Link>
+
           <Link href="/situations" className="hover:text-[#23303D]">
             Situations
           </Link>
 
-          <Link href="/" className="hover:text-[#23303D]">
-            Home
+          <Link
+            href="/dashboard"
+            className="rounded-full border border-[#C89B3C]/40 px-4 py-2 font-semibold text-[#2C3E50] transition hover:border-[#C89B3C] hover:bg-[#FFFDF9]"
+          >
+            My Compass
           </Link>
         </nav>
       </div>
