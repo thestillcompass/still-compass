@@ -7,7 +7,7 @@ const sourceSerif = Source_Serif_4({
   variable: "--font-source-serif",
 });
 
-  export const metadata = {
+export const metadata: Metadata = {
   title: "The Still Compass",
   description:
     "Biblical guidance for what you’re carrying right now. Start with your real-life situation and find scripture, reflection, and one faithful next step.",
@@ -35,8 +35,21 @@ const sourceSerif = Source_Serif_4({
   twitter: {
     card: "summary_large_image",
     title: "The Still Compass",
-    description:
-      "Biblical guidance for what you’re carrying right now.",
+    description: "Biblical guidance for what you’re carrying right now.",
     images: ["https://thestillcompass.com/still-compass-logo.png"],
   },
 };
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en">
+      <body className={`${sourceSerif.variable} antialiased`}>
+        {children}
+      </body>
+    </html>
+  );
+}
