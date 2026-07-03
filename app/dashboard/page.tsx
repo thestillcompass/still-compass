@@ -175,8 +175,7 @@ export default function DashboardPage() {
       setAnswerTitle(existingAnswer.title || "");
       setAnswerTestimony(existingAnswer.testimony || "");
       setAnswerDate(
-        existingAnswer.answered_at ||
-          new Date().toISOString().slice(0, 10)
+        existingAnswer.answered_at || new Date().toISOString().slice(0, 10)
       );
     } else {
       setAnswerTitle("");
@@ -250,7 +249,9 @@ export default function DashboardPage() {
     }
 
     setAnswerStatus("saved");
-    setAnswerMessage("Saved. This is now part of what God has brought you through.");
+    setAnswerMessage(
+      "Saved. This is now part of what God has brought you through."
+    );
 
     await loadDashboard();
 
@@ -282,14 +283,14 @@ export default function DashboardPage() {
             </div>
 
             {status === "ready" && (
-              <button
-                type="button"
-                onClick={handleSignOut}
-                className="rounded-full border border-[#2C3E50]/20 px-5 py-3 text-sm font-semibold text-[#2C3E50] transition hover:bg-[#FFFDF9]"
-              >
-                Sign out
-              </button>
-            )}
+  <button
+    type="button"
+    onClick={handleSignOut}
+    className="rounded-full border border-[#2C3E50]/20 px-5 py-3 text-sm font-semibold text-[#2C3E50] transition hover:bg-[#FFFDF9]"
+  >
+    Sign out
+  </button>
+)}
           </div>
         </div>
       </section>
@@ -432,7 +433,9 @@ export default function DashboardPage() {
                               <p className="mt-1 text-sm text-[#23303D]/60">
                                 {answeredPrayer.situation_title}
                                 {answeredPrayer.answered_at
-                                  ? ` · ${formatDate(answeredPrayer.answered_at)}`
+                                  ? ` · ${formatDate(
+                                      answeredPrayer.answered_at
+                                    )}`
                                   : ""}
                               </p>
                             </div>
@@ -521,14 +524,12 @@ export default function DashboardPage() {
                                   </p>
 
                                   <button
-                                    type="button"
-                                    onClick={() => openAnswerForm(entry)}
-                                    className="rounded-full border border-[#C89B3C]/40 px-4 py-2 text-sm font-semibold text-[#2C3E50] transition hover:border-[#C89B3C] hover:bg-[#FFFDF9]"
-                                  >
-                                    {answeredPrayer
-                                      ? "Edit answered prayer"
-                                      : "Mark as answered"}
-                                  </button>
+  type="button"
+  onClick={() => openAnswerForm(entry)}
+  className="rounded-full border border-[#C89B3C]/40 px-4 py-2 text-sm font-semibold text-[#2C3E50] transition hover:border-[#C89B3C] hover:bg-[#FFFDF9]"
+>
+  {answeredPrayer ? "Edit answered prayer" : "Mark as answered"}
+</button>
                                 </div>
 
                                 {entry.reflection_1 && (
@@ -623,7 +624,9 @@ export default function DashboardPage() {
                                     <div className="mt-5 flex flex-col gap-3 sm:flex-row">
                                       <button
                                         type="button"
-                                        onClick={() => saveAnsweredPrayer(entry)}
+                                        onClick={() =>
+                                          saveAnsweredPrayer(entry)
+                                        }
                                         disabled={answerStatus === "loading"}
                                         className="rounded-full bg-[#2C3E50] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#23303D] disabled:cursor-not-allowed disabled:opacity-60"
                                       >
