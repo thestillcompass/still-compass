@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import ApplicationPlanForm from "@/components/ApplicationPlanForm";
+import JournalPrompt from "@/components/JournalPrompt";
 import { getAllSituations, getSituationBySlug } from "@/data/situations";
 
 type SituationPageProps = {
@@ -144,28 +145,11 @@ export default async function SituationPage({ params }: SituationPageProps) {
           </div>
         </section>
 
-        {/* Reflection */}
-        <section id="reflection" className="mb-16">
-          <h2 className="mb-6 text-3xl font-semibold tracking-tight">
-            Reflection questions
-          </h2>
-
-          <div className="space-y-4">
-            {situation.reflectionQuestions.map((question, index) => (
-              <div
-                key={question}
-                className="rounded-2xl border border-[#C89B3C]/20 bg-[#FFFDF9] p-5"
-              >
-                <p className="text-lg leading-8 text-[#23303D]/85">
-                  <span className="mr-2 font-semibold text-[#C89B3C]">
-                    {index + 1}.
-                  </span>
-                  {question}
-                </p>
-              </div>
-            ))}
-          </div>
-        </section>
+        <JournalPrompt
+  situationSlug={situation.slug}
+  situationTitle={situation.title}
+  reflectionQuestions={situation.reflectionQuestions}
+/>
 
         {/* Application Plan */}
         <section
@@ -194,11 +178,11 @@ export default async function SituationPage({ params }: SituationPageProps) {
           </ul>
 
           <ApplicationPlanForm
-  situationSlug={situation.slug}
-  situationTitle={situation.title}
-  planTitle={situation.applicationPlan.title}
-  buttonText={situation.applicationPlan.cta}
-/>
+          situationSlug={situation.slug}
+          situationTitle={situation.title}
+          planTitle={situation.applicationPlan.title}
+          buttonText={situation.applicationPlan.cta}
+        />
         </section>
 
         {/* Related Situations */}
