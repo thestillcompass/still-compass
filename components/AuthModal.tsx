@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { supabaseClient } from "@/lib/supabaseClient";
+import { trackEvent } from "@/lib/analytics";
 
 type AuthModalProps = {
   isOpen: boolean;
@@ -45,17 +46,22 @@ const callbackUrl =
   )}`;
 
     const { error } = await supabaseClient.auth.signInWithOtp({
-      email: cleanEmail,
-      options: {
-        emailRedirectTo: callbackUrl,
-      },
-    });
+  email,
+  options: {
+    emailRedirectTo: callbackUrl,
+    shouldCreateUser: true,
+  },
+});
 
     if (error) {
       setStatus("error");
       setMessage(error.message || "Something went wrong. Please try again.");
       return;
     }
+
+    trackEvent("magic_link_requested", {
+  source: "auth_modal",
+});
 
     setStatus("sent");
     setMessage("Check your email. Your private sign-in link is on its way.");

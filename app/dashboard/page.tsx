@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { supabaseClient } from "@/lib/supabaseClient";
+import { trackEvent } from "@/lib/analytics";
 
 type JournalEntry = {
   id: string;
@@ -122,6 +123,7 @@ const user = session.user;
     setAnsweredPrayers(answeredData || []);
     setStatus("ready");
   }
+  
 
   useEffect(() => {
     loadDashboard();

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import AuthModal from "@/components/AuthModal";
 import { supabaseClient } from "@/lib/supabaseClient";
+import { trackEvent } from "@/lib/analytics";
 
 type JournalDraft = {
   reflection1: string;
@@ -233,12 +234,22 @@ export default function JournalPrompt({
       return;
     }
 
+    trackEvent("reflection_save_clicked", {
+      situation_slug: situationSlug,
+      situation_title: situationTitle,
+      signed_in: isSignedIn,
+    });
+
     const {
       data: { user },
     } = await supabaseClient.auth.getUser();
 
     if (!user) {
       saveDraftLocally();
+      trackEvent("magic_link_prompt_shown", {
+        situation_slug: situationSlug,
+        situation_title: situationTitle,
+      });
       setAuthModalOpen(true);
       setMessage(
         "Your reflection is held safely on this device. Sign in to save it privately."
@@ -257,6 +268,10 @@ export default function JournalPrompt({
 
       setStatus("saved");
       setMessage("Saved. You can come back to this in My Compass.");
+      trackEvent("reflection_saved", {
+        situation_slug: situationSlug,
+        situation_title: situationTitle,
+      });
     } catch (error) {
       console.error(error);
       setStatus("error");
