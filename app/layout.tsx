@@ -8,10 +8,10 @@ const sourceSerif = Source_Serif_4({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://thestillcompass.com"),
   title: "The Still Compass",
   description:
     "Biblical guidance for what you’re carrying right now. Start with your real-life situation and find scripture, reflection, and one faithful next step.",
-  metadataBase: new URL("https://thestillcompass.com"),
   icons: {
     icon: "/icon.png",
     apple: "/icon.png",
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "The Still Compass",
+        alt: "The Still Compass — Be still. Then know which way to go.",
       },
     ],
     locale: "en_US",

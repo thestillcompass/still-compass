@@ -29,23 +29,30 @@ export async function generateMetadata({
   if (!situation) {
     return {
       title: "Situation Not Found | The Still Compass",
+      description:
+        "Biblical guidance for real-life situations through scripture, reflection, and one faithful next step.",
     };
   }
+
+  const pageUrl = `https://thestillcompass.com/situations/${situation.slug}`;
 
   return {
     title: situation.metaTitle,
     description: situation.metaDescription,
+    alternates: {
+      canonical: pageUrl,
+    },
     openGraph: {
       title: situation.metaTitle,
       description: situation.metaDescription,
-      url: `https://thestillcompass.com/situations/${situation.slug}`,
+      url: pageUrl,
       siteName: "The Still Compass",
       images: [
         {
-          url: "https://thestillcompass.com/og-image.png",
+          url: "/og-image.png",
           width: 1200,
           height: 630,
-          alt: "The Still Compass",
+          alt: `${situation.title} | The Still Compass`,
         },
       ],
       locale: "en_US",
@@ -55,7 +62,7 @@ export async function generateMetadata({
       card: "summary_large_image",
       title: situation.metaTitle,
       description: situation.metaDescription,
-      images: ["https://thestillcompass.com/og-image.png"],
+      images: ["/og-image.png"],
     },
   };
 }

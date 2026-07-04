@@ -58,29 +58,32 @@ export default function AboutPage() {
           </p>
 
           <section className="rounded-[2rem] border border-[#C89B3C]/25 bg-[#FFFDF9] p-6 md:p-8">
-            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[#C89B3C]">
-              Who is behind this?
-            </p>
+  <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[#C89B3C]">
+    Who is behind this?
+  </p>
 
-            <h2 className="mt-3 text-3xl font-semibold text-[#2C3E50]">
-              Built by someone who believes guidance should feel quiet, clear,
-              and rooted.
-            </h2>
+  <h2 className="mt-3 text-3xl font-semibold text-[#2C3E50]">
+    Built by Sydney and Leland Lea as a quiet biblical guidance project.
+  </h2>
 
-            <p className="mt-5 leading-8 text-[#23303D]/80">
-              The Still Compass is being built by the team at The Still Compass as a situation-first
-              biblical guidance project for Christians who need help slowing
-              down, naming what they are carrying, and taking one faithful next
-              step.
-            </p>
+  <p className="mt-5 leading-8 text-[#23303D]/80">
+    The Still Compass is being built by Sydney and Leland Lea, Christian creators and strategists
+    who wanted to make scripture easier to return to in real-life moments of
+    worry, decision, burnout, conflict, and spiritual dryness.
+  </p>
 
-            <p className="mt-4 leading-8 text-[#23303D]/80">
-              This is not meant to replace scripture, prayer, church community,
-              pastoral care, counseling, or trusted Christian support. It is
-              meant to be a quiet companion when you need help getting your
-              bearings.
-            </p>
-          </section>
+  <p className="mt-4 leading-8 text-[#23303D]/80">
+    This project came from a simple conviction: sometimes people do not need
+    louder advice. They need space to be still, name what they are carrying,
+    return to scripture, and take one faithful next step.
+  </p>
+
+  <p className="mt-4 leading-8 text-[#23303D]/80">
+    The Still Compass is not meant to replace scripture, prayer, church
+    community, pastoral care, counseling, or trusted Christian support. It is
+    meant to be a quiet companion when you need help getting your bearings.
+  </p>
+</section>
 
           <p className="font-semibold text-[#2C3E50]">
             Be still. Then know which way to go.
