@@ -42,7 +42,7 @@ export async function generateMetadata({
       siteName: "The Still Compass",
       images: [
         {
-          url: "https://thestillcompass.com/still-compass-logo.png",
+          url: "https://thestillcompass.com/og-image.png",
           width: 1200,
           height: 630,
           alt: "The Still Compass",
@@ -55,7 +55,7 @@ export async function generateMetadata({
       card: "summary_large_image",
       title: situation.metaTitle,
       description: situation.metaDescription,
-      images: ["https://thestillcompass.com/still-compass-logo.png"],
+      images: ["https://thestillcompass.com/og-image.png"],
     },
   };
 }

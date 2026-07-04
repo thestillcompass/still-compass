@@ -11,6 +11,7 @@ export const metadata: Metadata = {
   title: "The Still Compass",
   description:
     "Biblical guidance for what you’re carrying right now. Start with your real-life situation and find scripture, reflection, and one faithful next step.",
+  metadataBase: new URL("https://thestillcompass.com"),
   icons: {
     icon: "/icon.png",
     apple: "/icon.png",
@@ -23,7 +24,7 @@ export const metadata: Metadata = {
     siteName: "The Still Compass",
     images: [
       {
-        url: "https://thestillcompass.com/still-compass-logo.png",
+        url: "/og-image.png",
         width: 1200,
         height: 630,
         alt: "The Still Compass",
@@ -36,7 +37,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "The Still Compass",
     description: "Biblical guidance for what you’re carrying right now.",
-    images: ["https://thestillcompass.com/still-compass-logo.png"],
+    images: ["/og-image.png"],
   },
 };
 
