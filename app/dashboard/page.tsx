@@ -72,21 +72,22 @@ export default function DashboardPage() {
     setErrorMessage("");
 
     const {
-      data: { user },
-      error: userError,
-    } = await supabaseClient.auth.getUser();
+  data: { session },
+  error: sessionError,
+} = await supabaseClient.auth.getSession();
 
-    if (userError) {
-      console.error(userError);
-      setStatus("error");
-      setErrorMessage("We could not load your account. Please try again.");
-      return;
-    }
+if (sessionError) {
+  console.error(sessionError);
+  setStatus("signed-out");
+  return;
+}
 
-    if (!user) {
-      setStatus("signed-out");
-      return;
-    }
+if (!session?.user) {
+  setStatus("signed-out");
+  return;
+}
+
+const user = session.user;
 
     setUserId(user.id);
     setEmail(user.email || "");
@@ -156,13 +157,15 @@ export default function DashboardPage() {
   }, [journalEntries]);
 
   async function handleSignOut() {
-    await supabaseClient.auth.signOut();
-    setStatus("signed-out");
-    setEmail("");
-    setUserId("");
-    setJournalEntries([]);
-    setAnsweredPrayers([]);
-  }
+  await supabaseClient.auth.signOut();
+
+  setStatus("signed-out");
+  setEmail("");
+  setUserId("");
+  setJournalEntries([]);
+  setAnsweredPrayers([]);
+  setActiveAnswerEntryId(null);
+}
 
   function openAnswerForm(entry: JournalEntry) {
     const existingAnswer = answeredByJournalEntryId.get(entry.id);
@@ -322,13 +325,13 @@ export default function DashboardPage() {
             </p>
 
             <h2 className="mt-3 text-3xl font-semibold text-[#2C3E50]">
-              Your saved reflections live here.
+              Sign in from a saved reflection.
             </h2>
 
             <p className="mt-4 max-w-2xl text-lg leading-8 text-[#23303D]/75">
-              Open any situation, write a reflection, and use the private magic
-              link to save it. Once you are signed in, this page will show what
-              you have saved.
+               My Compass is where your saved reflections and answered-prayer reminders
+              appear. To begin, choose a situation, write a reflection, and save it with a
+              private magic link.
             </p>
 
             <Link
