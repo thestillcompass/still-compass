@@ -33,6 +33,50 @@ export default function SituationsPage() {
           <p className="mt-4 text-sm font-medium text-[#2C3E50]/70">
               New situations are being added regularly.
           </p>
+          <div className="mt-8 rounded-[2rem] border border-[#C89B3C]/25 bg-[#FFFDF9] p-6 shadow-sm">
+  <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[#C89B3C]">
+    Not sure where to start?
+  </p>
+
+  <h2 className="mt-3 text-2xl font-semibold text-[#2C3E50]">
+    Choose the sentence that sounds closest.
+  </h2>
+
+  <div className="mt-5 grid gap-3 md:grid-cols-2">
+    <Link
+      href="/situations/cant-stop-worrying"
+      className="rounded-2xl border border-[#C89B3C]/20 bg-[#FAF6F1] p-4 transition hover:border-[#C89B3C]/60"
+    >
+      I cannot quiet my thoughts.
+    </Link>
+
+    <Link
+      href="/situations/hard-decision"
+      className="rounded-2xl border border-[#C89B3C]/20 bg-[#FAF6F1] p-4 transition hover:border-[#C89B3C]/60"
+    >
+      I need wisdom for a decision.
+    </Link>
+
+    <Link
+      href="/situations/burnout"
+      className="rounded-2xl border border-[#C89B3C]/20 bg-[#FAF6F1] p-4 transition hover:border-[#C89B3C]/60"
+    >
+      I feel tired in a way rest is not fixing.
+    </Link>
+
+    <Link
+      href="/situations/feeling-distant-from-god"
+      className="rounded-2xl border border-[#C89B3C]/20 bg-[#FAF6F1] p-4 transition hover:border-[#C89B3C]/60"
+    >
+      I feel distant from God.
+    </Link>
+  </div>
+
+  <p className="mt-5 text-sm leading-6 text-[#23303D]/65">
+    This is not a test. Start with the one that feels closest. You can always
+    return and choose another.
+  </p>
+</div>
         </div>
       </section>
 
