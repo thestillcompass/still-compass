@@ -1,6 +1,11 @@
+type AnalyticsParameters = Record<
+  string,
+  string | number | boolean | null | undefined
+>;
+
 export function trackEvent(
   eventName: string,
-  parameters?: Record<string, string | number | boolean | null | undefined>
+  parameters?: AnalyticsParameters
 ) {
   if (typeof window === "undefined") return;
 
@@ -16,7 +21,7 @@ declare global {
     gtag?: (
       command: "event",
       eventName: string,
-      parameters?: Record<string, string | number | boolean | null | undefined>
+      parameters?: AnalyticsParameters
     ) => void;
   }
 }

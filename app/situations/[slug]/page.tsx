@@ -5,6 +5,7 @@ import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import JournalPrompt from "@/components/JournalPrompt";
 import { getAllSituations, getSituationBySlug } from "@/data/situations";
+import SituationAnalytics from "@/components/SituationAnalytics";
 
 type SituationPageProps = {
   params: Promise<{
@@ -94,6 +95,10 @@ export default async function SituationPage({ params }: SituationPageProps) {
   return (
     <main className="min-h-screen bg-[#FAF6F1] text-[#23303D]">
       <SiteHeader />
+      <SituationAnalytics
+        situationSlug={situation.slug}
+        situationTitle={situation.title}
+      />
 
       {/* Hero */}
       <section className="border-b border-[#C89B3C]/20">

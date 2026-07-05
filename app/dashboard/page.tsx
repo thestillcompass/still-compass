@@ -119,6 +119,11 @@ const user = session.user;
       return;
     }
 
+    trackEvent("dashboard_view", {
+  reflection_count: journalData?.length || 0,
+  answered_prayer_count: answeredData?.length || 0,
+});
+
     setJournalEntries(journalData || []);
     setAnsweredPrayers(answeredData || []);
     setStatus("ready");
@@ -252,6 +257,11 @@ const user = session.user;
         return;
       }
     }
+
+    trackEvent("answered_prayer_saved", {
+      situation_slug: entry.situation_slug,
+      situation_title: entry.situation_title,
+    });
 
     setAnswerStatus("saved");
     setAnswerMessage(

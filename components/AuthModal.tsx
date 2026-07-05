@@ -63,6 +63,10 @@ const callbackUrl =
   source: "auth_modal",
 });
 
+trackEvent("magic_link_requested", {
+  source: "auth_modal",
+});
+
     setStatus("sent");
     setMessage("Check your email. Your private sign-in link is on its way.");
   }

@@ -27,6 +27,8 @@ export default function JournalPrompt({
   const [reflection2, setReflection2] = useState("");
   const [reflection3, setReflection3] = useState("");
   const [note, setNote] = useState("");
+  const [hasTrackedReflectionStart, setHasTrackedReflectionStart] =
+    useState(false);
 
   const [journalEntryId, setJournalEntryId] = useState<string | null>(null);
   const [isSignedIn, setIsSignedIn] = useState(false);
@@ -43,6 +45,17 @@ export default function JournalPrompt({
     () => `still-compass-journal-draft-${situationSlug}`,
     [situationSlug]
   );
+
+  function trackReflectionStarted() {
+    if (hasTrackedReflectionStart) return;
+
+    trackEvent("reflection_started", {
+      situation_slug: situationSlug,
+      situation_title: situationTitle,
+    });
+
+    setHasTrackedReflectionStart(true);
+  }
 
   function getCurrentDraft(): JournalDraft {
     return {
@@ -301,7 +314,10 @@ export default function JournalPrompt({
           </span>
           <textarea
             value={reflection1}
-            onChange={(event) => setReflection1(event.target.value)}
+            onChange={(event) => {
+              trackReflectionStarted();
+              setReflection1(event.target.value);
+            }}
             rows={4}
             className="w-full rounded-2xl border border-[#2C3E50]/15 bg-white px-4 py-3 text-[#23303D] outline-none focus:border-[#C89B3C]"
           />
@@ -313,7 +329,10 @@ export default function JournalPrompt({
           </span>
           <textarea
             value={reflection2}
-            onChange={(event) => setReflection2(event.target.value)}
+            onChange={(event) => {
+              trackReflectionStarted();
+              setReflection2(event.target.value);
+            }}
             rows={4}
             className="w-full rounded-2xl border border-[#2C3E50]/15 bg-white px-4 py-3 text-[#23303D] outline-none focus:border-[#C89B3C]"
           />
@@ -325,7 +344,10 @@ export default function JournalPrompt({
           </span>
           <textarea
             value={reflection3}
-            onChange={(event) => setReflection3(event.target.value)}
+            onChange={(event) => {
+              trackReflectionStarted();
+              setReflection3(event.target.value);
+            }}
             rows={4}
             className="w-full rounded-2xl border border-[#2C3E50]/15 bg-white px-4 py-3 text-[#23303D] outline-none focus:border-[#C89B3C]"
           />
@@ -337,7 +359,10 @@ export default function JournalPrompt({
           </span>
           <textarea
             value={note}
-            onChange={(event) => setNote(event.target.value)}
+            onChange={(event) => {
+              trackReflectionStarted();
+              setNote(event.target.value);
+            }}
             rows={5}
             className="w-full rounded-2xl border border-[#2C3E50]/15 bg-white px-4 py-3 text-[#23303D] outline-none focus:border-[#C89B3C]"
           />
