@@ -2,6 +2,7 @@ import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { getAllStories } from "@/data/stories";
+import StoryMatcher from "@/components/StoryMatcher";
 
 export const metadata = {
   title: "Bible Stories | The Still Compass",
@@ -39,6 +40,9 @@ export default function StoriesPage() {
       </section>
 
       <section className="mx-auto max-w-6xl px-6 py-14 md:py-20">
+        <div className="mb-8">
+  <StoryMatcher />
+</div>
         <div className="mb-8 rounded-[2rem] border border-[#C89B3C]/25 bg-[#FFFDF9] p-6 shadow-sm md:p-8">
           <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[#C89B3C]">
             What are you carrying?

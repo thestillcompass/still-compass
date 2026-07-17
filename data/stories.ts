@@ -4,6 +4,7 @@ export type StoryEntry = {
   scriptureReference: string;
   themeTags: string[];
   exampleQuestions: string[];
+  matchKeywords: string[];
   metaTitle: string;
   metaDescription: string;
   storyBrief: string[];
@@ -31,6 +32,25 @@ export const stories: StoryEntry[] = [
       "I feel like damaged goods.",
       "Can God still want me with my past?",
     ],
+
+    matchKeywords: [
+  "not enough",
+  "damaged",
+  "ashamed",
+  "shame",
+  "past",
+  "mistakes",
+  "seen",
+  "unseen",
+  "worth",
+  "self worth",
+  "rejected",
+  "rejection",
+  "accepted",
+  "acceptance",
+  "identity",
+  "God still want me",
+],
     metaTitle: "The Woman at the Well | The Still Compass",
     metaDescription:
       "A Bible story for when you feel ashamed, unseen, not enough, or afraid your past disqualifies you.",
@@ -71,6 +91,23 @@ export const stories: StoryEntry[] = [
       "I feel like I have disappointed God.",
       "Can I be restored after denying what I believe?",
     ],
+
+    matchKeywords: [
+  "failed",
+  "failure",
+  "guilt",
+  "guilty",
+  "ashamed",
+  "disappointed God",
+  "come back",
+  "too late",
+  "second chance",
+  "restored",
+  "restoration",
+  "messed up",
+  "denied",
+  "can God use me",
+],
     metaTitle: "Peter’s Restoration | The Still Compass",
     metaDescription:
       "A Bible story for when you feel like your failure is too final and you do not know how to come back.",
@@ -111,6 +148,23 @@ export const stories: StoryEntry[] = [
       "What does God say when I want to give up?",
       "Why do I feel exhausted after a big win?",
     ],
+
+    matchKeywords: [
+  "burnout",
+  "burned out",
+  "tired",
+  "exhausted",
+  "empty",
+  "give up",
+  "want to give up",
+  "despair",
+  "rest",
+  "weary",
+  "drained",
+  "overwhelmed",
+  "no strength",
+  "doing the right thing",
+],
     metaTitle: "Elijah Under the Broom Tree | The Still Compass",
     metaDescription:
       "A Bible story for when you are exhausted, burned out, discouraged, or quietly wanting to give up.",
@@ -151,6 +205,24 @@ export const stories: StoryEntry[] = [
       "I feel abandoned and alone.",
       "Where is God when I have no way forward?",
     ],
+
+    matchKeywords: [
+  "forgotten",
+  "abandoned",
+  "alone",
+  "unseen",
+  "invisible",
+  "no one sees me",
+  "God see me",
+  "does God see me",
+  "no way forward",
+  "crisis",
+  "wilderness",
+  "left behind",
+  "rejected",
+  "helpless",
+],
+
     metaTitle: "Hagar in the Wilderness | The Still Compass",
     metaDescription:
       "A Bible story for when you feel unseen, forgotten, abandoned, or alone in a crisis.",
