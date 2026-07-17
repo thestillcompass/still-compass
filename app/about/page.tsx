@@ -69,7 +69,7 @@ export default function AboutPage() {
             <div className="mt-6 space-y-5 text-lg leading-8 text-[#23303D]/80">
               <p>
                 For over 13 years, smoking and drinking were just part of my
-                life — not a dramatic rock-bottom story, just a long, ordinary
+                life, not a dramatic rock-bottom story, just a long, ordinary
                 habit I didn&apos;t think I&apos;d ever actually put down.
               </p>
 
@@ -100,15 +100,15 @@ export default function AboutPage() {
                 I&apos;m not sharing any of this because I&apos;ve got it all
                 figured out now. I&apos;m sharing it because in every one of
                 those seasons, there was a specific passage, a specific moment
-                of clarity, a specific next step that scripture gave me — not a
+                of clarity, a specific next step that scripture gave me, not a
                 vague feeling, an actual place to stand.
               </p>
 
               <p>
                 That&apos;s the whole idea behind The Still Compass. Not another
                 Bible app to read cover to cover. A place to land when
-                you&apos;re in the middle of something — anxious, burned out,
-                betrayed, afraid, stuck — and you need to know where to look,
+                you&apos;re in the middle of something anxious, burned out,
+                betrayed, afraid, stuck and you need to know where to look,
                 the way I needed to know, more than once.
               </p>
 

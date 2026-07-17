@@ -27,6 +27,10 @@ export default function SiteFooter() {
             Situations
           </Link>
 
+          <Link href="/stories" className="hover:text-[#23303D]">
+            Stories
+          </Link>
+
           <Link href="/about" className="hover:text-[#23303D]">
             About
           </Link>
