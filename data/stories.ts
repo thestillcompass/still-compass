@@ -255,6 +255,68 @@ export const stories: StoryEntry[] = [
     ],
   },
 
+    {
+    slug: "jesus-in-gethsemane",
+    title: "Jesus in Gethsemane",
+    scriptureReference: "Matthew 26:36–46; Luke 22:39–46",
+    themeTags: [
+      "fear",
+      "surrender",
+      "anguish",
+      "loneliness",
+      "obedience",
+      "unanswered prayer",
+    ],
+    exampleQuestions: [
+      "Why does obedience feel so painful?",
+      "What do I do when I am scared of what is coming?",
+      "Why did I pray and nothing changed?",
+      "How do I surrender when I do not want to go through this?",
+    ],
+    matchKeywords: [
+      "scared",
+      "afraid",
+      "fear",
+      "terrified",
+      "what is coming",
+      "do not want to go through this",
+      "don't want to go through this",
+      "surrender",
+      "obedience",
+      "painful obedience",
+      "anguish",
+      "alone",
+      "lonely",
+      "prayed and nothing changed",
+      "unanswered prayer",
+      "take this cup",
+      "God's will",
+      "your will be done",
+      "hard to obey",
+    ],
+    metaTitle: "Jesus in Gethsemane | The Still Compass",
+    metaDescription:
+      "A Bible story for when you are afraid, overwhelmed, lonely, or trying to surrender to God when the road ahead feels painful.",
+    storyBrief: [
+      "On the night before the cross, Jesus went with his disciples to a place called Gethsemane. He told them that his soul was overwhelmed with sorrow to the point of death. Then he went a little farther, fell on his face, and prayed.",
+      "Jesus asked the Father that, if possible, the cup would pass from him. But he also prayed, “Not as I will, but as you will.” His disciples fell asleep while he suffered in prayer. He was not untouched by anguish. He entered it honestly, prayed through it, and surrendered himself to the Father.",
+    ],
+    whyThisStory: [
+      "This story matters when you are scared of what obedience may cost, or when you prayed and the situation did not change. Gethsemane shows that surrender is not always calm. Sometimes surrender happens through tears, trembling, repeated prayer, and the honest words, “I do not want this.”",
+      "Jesus does not pretend the cup is easy. He names the weight of it. He asks for another way. That detail matters because faith is sometimes misunderstood as never feeling fear. But in Gethsemane, the sinless Son of God experiences deep anguish and brings it directly to the Father.",
+      "This story also speaks to loneliness. Jesus asked his friends to stay awake with him, and they could not. If you feel alone in something heavy, Gethsemane reminds you that Jesus is not distant from that kind of pain. He knows what it is to suffer while others do not fully understand the weight you are carrying.",
+    ],
+    whatThisMeans: [
+      "Your next step may be to pray honestly, not impressively. You can say, “Father, I do not want this. I am afraid. But help me stay with You.” That is not weak faith. In Gethsemane, honest surrender is still surrender.",
+      "Do not assume God has abandoned you because the hard path has not disappeared. Sometimes the answer is not escape from the cup, but strength to remain in the Father’s hands while you walk through what you cannot control.",
+    ],
+    reflectionQuestions: [
+      "What cup are you asking God to take away right now?",
+      "Where do you feel alone in something others may not fully understand?",
+      "What would honest surrender sound like if you prayed it in your own words today?",
+    ],
+  },
+
   {
     slug: "elijah-under-the-broom-tree",
     title: "Elijah under the broom tree",

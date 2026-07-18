@@ -207,10 +207,12 @@ export const guidanceThemes: GuidanceTheme[] = [
     ],
     primaryStorySlug: "job-in-suffering",
     secondaryStorySlugs: [
+    "jesus-in-gethsemane",    
     "hagar-in-the-wilderness",
     "elijah-under-the-broom-tree",
     "joseph-betrayed-by-his-brothers",
 ],
+
     relatedSituationSlug: "feeling-distant-from-god",
     bridgeCopy:
   "This sounds close to suffering, unanswered questions, and pain that does not make sense yet. Job is a place to begin because Scripture does not rush to explain suffering neatly. It gives room for grief, honest questions, and meeting God when answers feel absent.",
@@ -303,11 +305,14 @@ export const guidanceThemes: GuidanceTheme[] = [
       "panic",
       "scared",
     ],
-    primaryStorySlug: "elijah-under-the-broom-tree",
-    secondaryStorySlugs: ["hagar-in-the-wilderness"],
+    primaryStorySlug: "jesus-in-gethsemane",
+    secondaryStorySlugs: [
+    "elijah-under-the-broom-tree",
+    "hagar-in-the-wilderness",
+    ],
     relatedSituationSlug: "cant-stop-worrying",
     bridgeCopy:
-      "This sounds close to fear, anxiety, and thoughts that will not settle. A related place to begin is the worry guide, and Elijah’s story may also help if your fear has left you exhausted.",
+  "This sounds close to fear, anxiety, and thoughts that will not settle. Jesus in Gethsemane is a place to begin because he brings fear, anguish, and surrender honestly before the Father.",
   },
   {
     slug: "decision-wisdom",
@@ -339,4 +344,45 @@ export const guidanceThemes: GuidanceTheme[] = [
     bridgeCopy:
       "This sounds close to needing wisdom, direction, and a faithful next step. The hard decision guide is a good place to begin when you need clarity without rushing.",
   },
+
+    {
+    slug: "surrender-unanswered-prayer",
+    title: "Surrender and unanswered prayer",
+    shortDescription:
+      "When you prayed for the situation to change, but the hard path is still in front of you.",
+    userPhrases: [
+      "I prayed and nothing changed",
+      "God did not answer my prayer",
+      "I do not want to go through this",
+      "How do I surrender to God",
+      "Why is obedience so painful",
+      "I am scared of what is coming",
+    ],
+    keywords: [
+      "prayed and nothing changed",
+      "nothing changed",
+      "God did not answer",
+      "unanswered prayer",
+      "unanswered",
+      "do not want to go through",
+      "don't want to go through",
+      "surrender",
+      "obey",
+      "obedience",
+      "painful",
+      "hard path",
+      "what is coming",
+      "scared of what is coming",
+      "God's will",
+      "your will be done",
+      "take this away",
+      "take this cup",
+    ],
+    primaryStorySlug: "jesus-in-gethsemane",
+    secondaryStorySlugs: ["job-in-suffering", "elijah-under-the-broom-tree"],
+    relatedSituationSlug: "hard-decision",
+    bridgeCopy:
+      "This sounds close to surrender, unanswered prayer, and the fear of walking through something you did not choose. Jesus in Gethsemane is a place to begin because he prays honestly, asks for the cup to pass, and still entrusts himself to the Father.",
+  },
+
 ];
