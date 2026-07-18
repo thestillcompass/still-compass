@@ -109,11 +109,11 @@ export const guidanceThemes: GuidanceTheme[] = [
       "angry at",
       "bitterness",
     ],
-    primaryStorySlug: "peter-restored",
-    secondaryStorySlugs: ["hagar-in-the-wilderness"],
+    primaryStorySlug: "joseph-betrayed-by-his-brothers",
+    secondaryStorySlugs: ["peter-restored", "hagar-in-the-wilderness"],
     relatedSituationSlug: "conflict-with-someone-you-love",
-    bridgeCopy:
-      "This sounds close to betrayal, anger, and the hard work of forgiveness. The Still Compass does not have the Joseph betrayal story written yet, but a good place to begin is the conflict guide, along with Peter’s restoration for the question of what mercy and repair can look like.",
+  bridgeCopy:
+  "This sounds close to betrayal, anger, and the hard work of forgiveness. Joseph’s story is a place to begin because Scripture does not minimize what was done to him, but it also shows that betrayal does not get the final word over his life.",
   },
   {
     slug: "burnout-exhaustion",
