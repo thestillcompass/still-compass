@@ -194,6 +194,68 @@ export const stories: StoryEntry[] = [
   },
   
   {
+    slug: "job-in-suffering",
+    title: "Job in suffering",
+    scriptureReference: "Job 1–2; 38–42",
+    themeTags: [
+      "suffering",
+      "unanswered questions",
+      "grief",
+      "anger at God",
+      "loss",
+      "pain",
+    ],
+    exampleQuestions: [
+      "If God loved me why did I have to go through this?",
+      "Why did God let this happen to me?",
+      "Where was God when I was suffering?",
+      "Why am I going through pain I did not deserve?",
+    ],
+    matchKeywords: [
+      "why did God",
+      "God loved me",
+      "why did I go through",
+      "why is this happening",
+      "why did this happen",
+      "suffering",
+      "pain",
+      "grief",
+      "loss",
+      "where was God",
+      "God let this happen",
+      "unanswered",
+      "why me",
+      "not fair",
+      "unfair",
+      "did not deserve",
+      "angry at God",
+      "mad at God",
+      "question God",
+    ],
+    metaTitle: "Job in Suffering | The Still Compass",
+    metaDescription:
+      "A Bible story for when you are suffering, grieving, angry, or carrying questions that do not have easy answers.",
+    storyBrief: [
+      "Job was a man who suffered deeply and suddenly. He lost his children, his possessions, his health, and the life he had known. The book of Job does not treat his pain lightly. It gives space to his grief, confusion, protest, and unanswered questions.",
+      "Job’s friends tried to explain his suffering too quickly. They assumed there must be a simple reason, a clear fault, or an easy spiritual lesson. But the story challenges those shallow explanations. When God finally speaks, He does not give Job a tidy answer to every question. He reveals His presence, power, and wisdom in a way that humbles Job and restores him.",
+    ],
+    whyThisStory: [
+      "This story matters when your question is not small: “If God loves me, why did this happen?” Job gives you permission to bring that question into scripture without pretending it is easy. He does not smile through suffering. He grieves. He speaks. He wrestles.",
+      "One of the most important parts of Job is that the easy explanations come from his friends, not from God. They try to make suffering simple. The book does not. That matters when people have said things to you that made your pain feel even heavier, as if you must have caused it or should be over it by now.",
+      "Job’s story does not answer every why. But it does show that God is not fragile in the presence of honest grief. Job brings his anguish before God, and God meets him. Not with a small explanation, but with a larger encounter. Sometimes scripture does not give you a reason you can hold. It gives you God Himself as the place to stand when reasons are not enough.",
+    ],
+    whatThisMeans: [
+      "Your next step may be to stop forcing a neat answer before you are ready. You can bring your pain to God truthfully: “I do not understand this. I do not know why this happened. But I am still here before You.”",
+      "Be careful with voices that rush to explain your suffering. Job’s story reminds you that not every painful season can be reduced to a simple lesson. Sometimes faithfulness means grieving honestly while refusing to let pain be the only voice that defines God.",
+    ],
+    reflectionQuestions: [
+      "What question have you been afraid to bring honestly before God?",
+      "Where have quick explanations from others made your pain feel heavier?",
+      "What would it look like to stay before God even without having every answer yet?",
+    ],
+  },
+
+  {
     slug: "elijah-under-the-broom-tree",
     title: "Elijah under the broom tree",
     scriptureReference: "1 Kings 19:1–8",

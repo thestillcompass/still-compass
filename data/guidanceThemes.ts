@@ -205,11 +205,15 @@ export const guidanceThemes: GuidanceTheme[] = [
       "unanswered",
       "why me",
     ],
-    primaryStorySlug: "hagar-in-the-wilderness",
-    secondaryStorySlugs: ["elijah-under-the-broom-tree"],
-    relatedSituationSlug: "job-loss-financial-fear",
+    primaryStorySlug: "job-in-suffering",
+    secondaryStorySlugs: [
+    "hagar-in-the-wilderness",
+    "elijah-under-the-broom-tree",
+    "joseph-betrayed-by-his-brothers",
+],
+    relatedSituationSlug: "feeling-distant-from-god",
     bridgeCopy:
-      "This sounds close to suffering, unanswered questions, and pain that does not make sense yet. The Still Compass does not have the Job story written yet, but Hagar and Elijah both give you a biblical place to bring pain honestly before God.",
+  "This sounds close to suffering, unanswered questions, and pain that does not make sense yet. Job is a place to begin because Scripture does not rush to explain suffering neatly. It gives room for grief, honest questions, and meeting God when answers feel absent.",
   },
   {
     slug: "parent-guilt",
