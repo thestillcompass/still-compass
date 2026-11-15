@@ -122,14 +122,19 @@ export default function StoryMatcher() {
       </p>
 
       <h2 className="mt-3 text-3xl font-semibold text-[#2C3E50]">
-        Write what you are carrying.
+        What is on your heart today?
       </h2>
 
       <p className="mt-4 max-w-2xl leading-7 text-[#23303D]/70">
-        Use your own words. The Still Compass will point you to a pre-written
-        Bible story or situation guide that may help you begin. It does not
-        generate a new answer live.
-      </p>
+  Tell us what you are facing, feeling, or questioning.
+  We will suggest a relevant Bible story or Scripture guide
+  that may help you begin.
+</p>
+
+<p className="mt-3 text-sm leading-6 text-[#23303D]/60">
+  Your words are matched to pre-written guidance.
+  This search does not create a new spiritual answer.
+</p>
 
       <form onSubmit={handleSubmit} className="mt-6">
         <label

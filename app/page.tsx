@@ -3,6 +3,7 @@ import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { getFeaturedSituations } from "@/data/situations";
+import StoryMatcher from "@/components/StoryMatcher";
 
 export default function HomePage() {
   const featuredSituations = getFeaturedSituations();
@@ -35,10 +36,10 @@ export default function HomePage() {
 
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               <Link
-                href="/situations"
+                href="#find-guidance"
                 className="rounded-full bg-[#2C3E50] px-6 py-3 text-center text-sm font-semibold text-white transition hover:opacity-90"
               >
-                Find guidance for your situation
+                Find a place in Scripture
               </Link>
 
               <a
@@ -78,6 +79,52 @@ export default function HomePage() {
 </div>
         </div>
       </section>
+
+      <section
+  id="find-guidance"
+  className="border-b border-[#C89B3C]/20 bg-[#FAF6F1]"
+>
+  <div className="mx-auto max-w-5xl px-6 py-16 md:py-24">
+    <div className="mb-10 text-center">
+      <p className="text-sm font-semibold uppercase tracking-[0.25em] text-[#C89B3C]">
+        Your place to begin
+      </p>
+
+      <h2 className="mt-4 text-3xl font-semibold tracking-tight text-[#2C3E50] md:text-5xl">
+        You do not need to have the right words.
+      </h2>
+
+      <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-[#23303D]/75">
+        Whatever you are carrying, begin honestly.
+        We will help you find a place in Scripture to start.
+      </p>
+    </div>
+
+    <StoryMatcher />
+
+    <div className="mt-8 text-center">
+      <p className="text-sm leading-7 text-[#23303D]/65">
+        Prefer to explore at your own pace?
+      </p>
+
+      <div className="mt-4 flex flex-wrap justify-center gap-4">
+        <a
+          href="/situations"
+          className="rounded-full border border-[#C89B3C]/40 px-5 py-3 text-sm font-semibold text-[#2C3E50] transition hover:bg-[#FFFDF9]"
+        >
+          Browse situations
+        </a>
+
+        <a
+          href="/stories"
+          className="rounded-full border border-[#C89B3C]/40 px-5 py-3 text-sm font-semibold text-[#2C3E50] transition hover:bg-[#FFFDF9]"
+        >
+          Explore Bible stories
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
 
       {/* Featured Situations */}
       <section className="mx-auto max-w-6xl px-6 py-14 md:py-20">

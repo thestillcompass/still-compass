@@ -99,7 +99,7 @@ const user = session.user;
       .eq("user_id", user.id)
       .order("updated_at", { ascending: false });
 
-    if (journalError) {
+    if (journalError) { 
       console.error(journalError);
       setStatus("error");
       setErrorMessage("We could not load your saved reflections.");
