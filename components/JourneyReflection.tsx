@@ -93,8 +93,8 @@ export default function JourneyReflection({
         if (!isCurrent()) return;
 
         if (authError || !user) {
-          accountIdRef.current = null;
           setUserId(null);
+          accountIdRef.current = null;
           setReflection("");
           setBusy(false);
           return;
