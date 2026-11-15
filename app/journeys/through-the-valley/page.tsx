@@ -1,6 +1,7 @@
 
 import type { Metadata } from "next";
 import Link from "next/link";
+import JourneyReflection from "@/components/JourneyReflection";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 
@@ -264,13 +265,13 @@ export default function ThroughTheValleyPage() {
             reflection today, you can use the existing
             reflection space in our worry guide.
           </p>
+        </section>
 
-          <Link
-            href="/situations/cant-stop-worrying#reflection"
-            className="mt-4 inline-block text-sm font-semibold text-[#2C3E50] underline underline-offset-4"
-          >
-            Open the private reflection space
-          </Link>
+        <section id="journey-reflection" className="mb-14 scroll-mt-24">
+        <JourneyReflection
+        journeySlug="through-the-valley"
+         journeyTitle="Through the Valley"
+        />
         </section>
 
         <section className="mb-14 rounded-[2rem] border border-[#C89B3C]/25 bg-[#FFFDF9] p-6 md:p-8">
@@ -301,7 +302,7 @@ export default function ThroughTheValleyPage() {
             </a>
           ) : (
             <p className="mt-5 text-sm leading-7 text-[#23303D]/60">
-              The worship video link will be added here.
+              https://www.youtube.com/watch?v=wjAx6BPYxUs
             </p>
           )}
         </section>
