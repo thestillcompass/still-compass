@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { supabaseClient } from "@/lib/supabaseClient";
@@ -33,6 +33,21 @@ type AnsweredPrayer = {
   updated_at: string;
 };
 
+type JourneyReflection = {
+  id: string;
+  user_id: string;
+  journey_slug: string;
+  journey_title: string;
+  reflection_text: string;
+  created_at: string;
+  updated_at: string;
+};
+
+// Link only to journey routes that have been published.
+const journeyPaths: Record<string, string> = {
+  "through-the-valley": "/journeys/through-the-valley",
+};
+
 type DashboardStatus = "loading" | "signed-out" | "ready" | "error";
 
 function formatDate(dateString: string | null) {
@@ -52,6 +67,9 @@ export default function DashboardPage() {
 
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
   const [answeredPrayers, setAnsweredPrayers] = useState<AnsweredPrayer[]>([]);
+  const [journeyReflections, setJourneyReflections] = useState<JourneyReflection[]>([]);
+  const [journeyLoadWarning, setJourneyLoadWarning] = useState("");
+  const loadVersion = useRef(0);
 
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -69,13 +87,17 @@ export default function DashboardPage() {
   const [answerMessage, setAnswerMessage] = useState("");
 
   async function loadDashboard() {
+    const version = ++loadVersion.current;
     setStatus("loading");
     setErrorMessage("");
+    setJourneyLoadWarning("");
 
-    const {
+     const {
   data: { session },
   error: sessionError,
 } = await supabaseClient.auth.getSession();
+
+if (version !== loadVersion.current) return;
 
 if (sessionError) {
   console.error(sessionError);
@@ -99,6 +121,8 @@ const user = session.user;
       .eq("user_id", user.id)
       .order("updated_at", { ascending: false });
 
+    if (version !== loadVersion.current) return;
+
     if (journalError) { 
       console.error(journalError);
       setStatus("error");
@@ -112,6 +136,8 @@ const user = session.user;
       .eq("user_id", user.id)
       .order("answered_at", { ascending: false });
 
+    if (version !== loadVersion.current) return;
+
     if (answeredError) {
       console.error(answeredError);
       setStatus("error");
@@ -119,16 +145,36 @@ const user = session.user;
       return;
     }
 
+    // Journey data is additive: a failure here must not hide existing
+    // situation reflections or answered prayers.
+    const { data: journeyData, error: journeyError } = await supabaseClient
+      .from("journey_reflections")
+      .select("id,user_id,journey_slug,journey_title,reflection_text,created_at,updated_at")
+      .eq("user_id", user.id)
+      .order("updated_at", { ascending: false });
+
+      if (version !== loadVersion.current) return;
+
+    if (journeyError) {
+      console.error("Could not load journey reflections:", journeyError);
+      setJourneyLoadWarning(
+        "Your Scripture journeys could not be loaded right now. Your other saved items are still available."
+      );
+      setJourneyReflections([]);
+    } else {
+      setJourneyReflections((journeyData || []) as JourneyReflection[]);
+    }
+
     trackEvent("dashboard_view", {
-  reflection_count: journalData?.length || 0,
-  answered_prayer_count: answeredData?.length || 0,
-});
+      reflection_count: journalData?.length || 0,
+      answered_prayer_count: answeredData?.length || 0,
+      journey_count: journeyError ? undefined : journeyData?.length || 0,
+    });
 
     setJournalEntries(journalData || []);
     setAnsweredPrayers(answeredData || []);
     setStatus("ready");
   }
-  
 
   useEffect(() => {
     loadDashboard();
@@ -164,17 +210,27 @@ const user = session.user;
   }, [journalEntries]);
 
   async function handleSignOut() {
-  await supabaseClient.auth.signOut();
+  // Prevent an in-flight dashboard fetch from repopulating private state.
+  loadVersion.current += 1;
+  const { error } = await supabaseClient.auth.signOut();
+  if (error) {
+    console.error("Sign out failed:", error);
+    setErrorMessage("Could not sign out. Please try again.");
+    setStatus("error");
+    return;
+  }
 
   setStatus("signed-out");
   setEmail("");
   setUserId("");
   setJournalEntries([]);
   setAnsweredPrayers([]);
+  setJourneyReflections([]);
+  setJourneyLoadWarning("");
   setActiveAnswerEntryId(null);
 }
 
-  function openAnswerForm(entry: JournalEntry) {
+function openAnswerForm(entry: JournalEntry) {
     const existingAnswer = answeredByJournalEntryId.get(entry.id);
 
     setActiveAnswerEntryId(entry.id);
@@ -219,7 +275,8 @@ const user = session.user;
     setAnswerStatus("loading");
     setAnswerMessage("");
 
-    const payload = {
+
+     const payload = {
       user_id: userId,
       journal_entry_id: entry.id,
       situation_slug: entry.situation_slug,
@@ -250,7 +307,7 @@ const user = session.user;
         .from("answered_prayers")
         .insert(payload);
 
-      if (error) {
+        if (error) {
         console.error(error);
         setAnswerStatus("error");
         setAnswerMessage("This could not be saved. Please try again.");
@@ -298,6 +355,7 @@ const user = session.user;
             </div>
 
             {status === "ready" && (
+
   <button
     type="button"
     onClick={handleSignOut}
@@ -330,7 +388,8 @@ const user = session.user;
           </div>
         )}
 
-        {status === "signed-out" && (
+
+{status === "signed-out" && (
           <div className="rounded-3xl border border-[#C89B3C]/25 bg-[#FFFDF9] p-8 shadow-sm md:p-10">
             <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[#C89B3C]">
               Sign in needed
@@ -365,15 +424,19 @@ const user = session.user;
               <p className="mt-2 text-lg text-[#23303D]/75">{email}</p>
             </div>
 
-            {journalEntries.length === 0 ? (
+            {journalEntries.length === 0 &&
+            journeyReflections.length === 0 &&
+            answeredPrayers.length === 0 &&
+            !journeyLoadWarning ? (
               <div className="rounded-3xl border border-[#C89B3C]/25 bg-[#FFFDF9] p-8 shadow-sm md:p-10">
                 <h2 className="text-3xl font-semibold text-[#2C3E50]">
                   Nothing saved yet.
                 </h2>
 
                 <p className="mt-4 max-w-2xl text-lg leading-8 text-[#23303D]/75">
-                  Start with the situation closest to what you are carrying.
-                  When you write and save a reflection, it will appear here.
+                  Begin with a situation you are facing, or spend time in a
+                  Scripture journey. When you choose to save a reflection,
+                  you can return to it here.
                 </p>
 
                 <Link
@@ -382,8 +445,14 @@ const user = session.user;
                 >
                   Choose a situation
                 </Link>
+                <Link
+                  href="/journeys/through-the-valley"
+                  className="ml-0 mt-3 inline-flex rounded-full border border-[#C89B3C]/50 px-6 py-3 text-sm font-semibold text-[#2C3E50] sm:ml-3"
+                >
+                  Explore a Scripture journey
+                </Link>
               </div>
-            ) : (
+              ) : (
               <>
                 <div className="grid gap-4 md:grid-cols-4">
                   <div className="rounded-3xl border border-[#C89B3C]/20 bg-[#FFFDF9] p-6 shadow-sm">
@@ -391,7 +460,7 @@ const user = session.user;
                       Reflections
                     </p>
                     <p className="mt-3 text-4xl font-semibold text-[#2C3E50]">
-                      {journalEntries.length}
+                      {journalEntries.length + journeyReflections.length}
                     </p>
                   </div>
 
@@ -404,7 +473,7 @@ const user = session.user;
                     </p>
                   </div>
 
-                  <div className="rounded-3xl border border-[#C89B3C]/20 bg-[#FFFDF9] p-6 shadow-sm">
+                   <div className="rounded-3xl border border-[#C89B3C]/20 bg-[#FFFDF9] p-6 shadow-sm">
                     <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#C89B3C]">
                       Answered
                     </p>
@@ -418,10 +487,78 @@ const user = session.user;
                       Latest
                     </p>
                     <p className="mt-3 text-lg font-semibold text-[#2C3E50]">
-                      {formatDate(journalEntries[0].updated_at)}
+                      {formatDate(
+                        [
+                          ...journalEntries.map((entry) => entry.updated_at),
+                          ...journeyReflections.map((entry) => entry.updated_at),
+                          ...answeredPrayers.map((entry) => entry.updated_at),
+                        ].sort((a, b) => b.localeCompare(a))[0] || null
+                      ) || "—"}
                     </p>
                   </div>
                 </div>
+
+<section className="rounded-[2rem] border border-[#C89B3C]/25 bg-[#FFFDF9] p-6 shadow-sm md:p-8">
+                  <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[#C89B3C]">
+                    My Scripture journeys
+                  </p>
+                  <h2 className="mt-2 text-3xl font-semibold tracking-tight text-[#2C3E50]">
+                    Continue with what you are learning
+                  </h2>
+                  <p className="mt-3 text-[#23303D]/70 leading-7">
+                    Return to a passage you have reflected on, at your own pace.
+                  </p>
+
+                  {journeyLoadWarning && (
+                    <p role="status" className="mt-5 rounded-2xl bg-[#FAF6F1] p-4 text-sm text-[#23303D]/80">
+                      {journeyLoadWarning}
+                    </p>
+                  )}
+
+                  {!journeyLoadWarning && journeyReflections.length === 0 && (
+                    <div className="mt-6 rounded-2xl bg-[#FAF6F1] p-5">
+                      <p className="text-[#23303D]/75 leading-7">
+                        You have not saved a Scripture journey reflection yet.
+                      </p>
+                      <Link
+                        href="/journeys/through-the-valley"
+                        className="mt-4 inline-flex rounded-full border border-[#C89B3C]/40 px-5 py-3 text-sm font-semibold text-[#2C3E50] hover:bg-white"
+                      >
+                        Explore Through the Valley
+                      </Link>
+                    </div>
+                  )}
+
+                  {!journeyLoadWarning && journeyReflections.length > 0 && (
+                    <div className="mt-6 space-y-4">
+                      {journeyReflections.map((journey) => (
+                        <article key={journey.id} className="rounded-3xl bg-[#FAF6F1] p-5">
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                            <div>
+                              <h3 className="text-xl font-semibold text-[#2C3E50]">
+                                {journey.journey_title || "Scripture journey"}
+                              </h3>
+                              <p className="mt-1 text-sm text-[#23303D]/60">
+                                Last reflected {formatDate(journey.updated_at)}
+                              </p>
+                            </div>
+                            {journeyPaths[journey.journey_slug] && (
+                              <Link
+                                href={journeyPaths[journey.journey_slug]}
+                                className="text-sm font-semibold text-[#2C3E50] underline-offset-4 hover:underline"
+                              >
+                                Revisit journey
+                              </Link>
+                            )}
+                          </div>
+                          <p className="mt-4 whitespace-pre-wrap break-words leading-7 text-[#23303D]/80">
+                            {journey.reflection_text}
+                          </p>
+                        </article>
+                      ))}
+                    </div>
+                  )}
+                </section>
 
                 {answeredPrayers.length > 0 && (
                   <section className="rounded-[2rem] border border-[#C89B3C]/25 bg-[#FFFDF9] p-6 shadow-sm md:p-8">
@@ -474,7 +611,7 @@ const user = session.user;
                   </section>
                 )}
 
-                <section>
+                {journalEntries.length > 0 && <section>
                   <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                     <div>
                       <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[#C89B3C]">
@@ -528,7 +665,7 @@ const user = session.user;
                             const isAnswerFormOpen =
                               activeAnswerEntryId === entry.id;
 
-                            return (
+                              return (
                               <div
                                 key={entry.id}
                                 className="rounded-3xl bg-[#FAF6F1] p-5"
@@ -667,7 +804,7 @@ const user = session.user;
                       </div>
                     ))}
                   </div>
-                </section>
+                </section>}
               </>
             )}
           </div>
