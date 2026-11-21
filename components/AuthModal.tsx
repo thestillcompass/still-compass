@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { supabaseClient } from "@/lib/supabaseClient";
 import { trackEvent } from "@/lib/analytics";
+import { startGoogleSignIn } from "@/lib/googleSignIn";
 
 type AuthModalProps = {
   isOpen: boolean;
@@ -22,6 +23,19 @@ export default function AuthModal({
   const [message, setMessage] = useState("");
 
   if (!isOpen) return null;
+
+  async function handleGoogleSignIn() {
+    try {
+      const returnPath = `${window.location.pathname}${window.location.search}`;
+
+      await startGoogleSignIn(returnPath);
+    } catch (error) {
+      console.error("Google sign-in failed:", error);
+      window.alert(
+        "We could not start Google sign-in. Please try again."
+      );
+    }
+  }
 
   async function handleMagicLinkSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -93,6 +107,32 @@ trackEvent("magic_link_requested", {
             ×
           </button>
         </div>
+
+        <div className="mb-6">
+  <button
+    type="button"
+    onClick={handleGoogleSignIn}
+    className="flex w-full items-center justify-center gap-3 rounded-full border border-[#C89B3C]/40 bg-white px-6 py-3 text-sm font-semibold text-[#2C3E50] transition hover:bg-[#FAF6F1]"
+  >
+    <span
+      aria-hidden="true"
+      className="text-lg font-bold"
+    >
+      G
+    </span>
+    Continue with Google
+  </button>
+
+  <div className="my-6 flex items-center gap-4">
+    <div className="h-px flex-1 bg-[#C89B3C]/20" />
+
+    <span className="text-xs text-[#23303D]/60">
+      or continue with email
+    </span>
+
+    <div className="h-px flex-1 bg-[#C89B3C]/20" />
+  </div>
+</div>
 
         {status !== "sent" ? (
           <form onSubmit={handleMagicLinkSubmit} className="space-y-4">

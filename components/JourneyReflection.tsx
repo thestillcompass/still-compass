@@ -3,15 +3,21 @@
 
 import { useEffect, useRef, useState } from "react";
 import { supabaseClient } from "@/lib/supabaseClient";
+import { startGoogleSignIn } from "@/lib/googleSignIn";
 
 type Props = {
   journeySlug: string;
   journeyTitle: string;
 };
 
-type PendingDraft = {
+type EmailDraft = {
   text: string;
   email: string;
+  createdAt: number;
+};
+
+type GoogleDraft = {
+  text: string;
   createdAt: number;
 };
 
@@ -27,18 +33,23 @@ export default function JourneyReflection({
 }: Props) {
   const [reflection, setReflection] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState("");
   const [email, setEmail] = useState("");
   const [showSignIn, setShowSignIn] = useState(false);
   const [busy, setBusy] = useState(true);
   const [message, setMessage] = useState("");
+  const [googleDraft, setGoogleDraft] =
+    useState<GoogleDraft | null>(null);
 
   const requestVersion = useRef(0);
   const accountIdRef = useRef<string | null>(null);
 
-  const pendingKey =
+  const emailPendingKey =
     `still-compass-journey-${journeySlug}-pending-v2`;
 
-  // Remove the older, unscoped browser drafts.
+  const googlePendingKey =
+    `still-compass-google-draft-${journeySlug}-v1`;
+
   const legacyDraftKey =
     `still-compass-journey-${journeySlug}`;
 
@@ -64,9 +75,7 @@ export default function JourneyReflection({
         }
       );
 
-    if (error) {
-      throw error;
-    }
+    if (error) throw error;
   }
 
   useEffect(() => {
@@ -74,14 +83,16 @@ export default function JourneyReflection({
     const version = ++requestVersion.current;
 
     function isCurrent() {
-      return active && requestVersion.current === version;
+      return (
+        active &&
+        requestVersion.current === version
+      );
     }
 
     async function initialize() {
       try {
-        // These keys came from the older implementation,
-        // where browser drafts were not account-specific.
-        // We intentionally do not restore them.
+        // Discard older drafts that were not
+        // associated with an account.
         localStorage.removeItem(legacyDraftKey);
         localStorage.removeItem(legacyPendingKey);
 
@@ -93,75 +104,141 @@ export default function JourneyReflection({
         if (!isCurrent()) return;
 
         if (authError || !user) {
-          setUserId(null);
           accountIdRef.current = null;
+          setUserId(null);
+          setUserEmail("");
           setReflection("");
-          setBusy(false);
+          setGoogleDraft(null);
           return;
         }
+
         accountIdRef.current = user.id;
         setUserId(user.id);
+        setUserEmail(user.email || "");
 
-        const pendingRaw = localStorage.getItem(pendingKey);
+        // Google drafts are kept in sessionStorage
+        // for this browser tab, not localStorage.
+        const googleRaw =
+          sessionStorage.getItem(googlePendingKey);
 
-        let pending: PendingDraft | null = null;
+        let pendingGoogle: GoogleDraft | null = null;
 
-        if (pendingRaw) {
+        if (googleRaw) {
           try {
-            pending = JSON.parse(pendingRaw) as PendingDraft;
+            const parsed = JSON.parse(googleRaw);
+
+            if (
+              typeof parsed?.text === "string" &&
+              typeof parsed?.createdAt === "number" &&
+              parsed.createdAt <= Date.now() &&
+              Date.now() - parsed.createdAt <
+                DRAFT_LIFETIME_MS
+            ) {
+              pendingGoogle = parsed;
+            } else {
+              sessionStorage.removeItem(
+                googlePendingKey
+              );
+            }
           } catch {
-            localStorage.removeItem(pendingKey);
+            sessionStorage.removeItem(
+              googlePendingKey
+            );
           }
         }
 
-        const pendingIsValid =
-          pending !== null &&
-          typeof pending.text === "string" &&
-          typeof pending.email === "string" &&
-          typeof pending.createdAt === "number" &&
-          pending.createdAt <= Date.now() &&
-          Date.now() - pending.createdAt <
-            DRAFT_LIFETIME_MS &&
-          normalizeEmail(pending.email) ===
-            normalizeEmail(user.email || "");
+        // Restore the user's existing saved entry.
+        const {
+          data: existing,
+          error: loadError,
+        } = await supabaseClient
+          .from("journey_reflections")
+          .select("reflection_text")
+          .eq("user_id", user.id)
+          .eq("journey_slug", journeySlug)
+          .maybeSingle();
 
-        if (pending && !pendingIsValid) {
-          localStorage.removeItem(pendingKey);
-          pending = null;
+        if (loadError) throw loadError;
+        if (!isCurrent()) return;
+
+        // A pending Google draft is never
+        // automatically written to Supabase.
+        if (pendingGoogle) {
+          setReflection(
+            existing?.reflection_text ?? ""
+          );
+          setGoogleDraft(pendingGoogle);
+          setMessage(
+            "Google sign-in completed. Review your draft before saving it."
+          );
+          return;
         }
 
-        if (pending && pendingIsValid) {
-          await saveReflection(user.id, pending.text);
+        const emailRaw =
+          localStorage.getItem(emailPendingKey);
+
+        let pendingEmail: EmailDraft | null = null;
+
+        if (emailRaw) {
+          try {
+            const parsed = JSON.parse(emailRaw);
+
+            const isValid =
+              typeof parsed?.text === "string" &&
+              typeof parsed?.email === "string" &&
+              typeof parsed?.createdAt === "number" &&
+              parsed.createdAt <= Date.now() &&
+              Date.now() - parsed.createdAt <
+                DRAFT_LIFETIME_MS &&
+              normalizeEmail(parsed.email) ===
+                normalizeEmail(user.email || "");
+
+            if (isValid) {
+              pendingEmail = parsed;
+            } else {
+              localStorage.removeItem(
+                emailPendingKey
+              );
+            }
+          } catch {
+            localStorage.removeItem(
+              emailPendingKey
+            );
+          }
+        }
+
+        if (pendingEmail) {
+          // Preserve the previously tested
+          // email magic-link save behavior.
+          await saveReflection(
+            user.id,
+            pendingEmail.text
+          );
 
           if (!isCurrent()) return;
 
-          setReflection(pending.text);
-          localStorage.removeItem(pendingKey);
+          localStorage.removeItem(
+            emailPendingKey
+          );
+
+          setReflection(pendingEmail.text);
           setMessage(
             "Your reflection has been saved privately."
           );
         } else {
-          const {
-            data: existing,
-            error: loadError,
-          } = await supabaseClient
-            .from("journey_reflections")
-            .select("reflection_text")
-            .eq("user_id", user.id)
-            .eq("journey_slug", journeySlug)
-            .maybeSingle();
-
-          if (loadError) throw loadError;
-          if (!isCurrent()) return;
-
-          setReflection(existing?.reflection_text ?? "");
+          setReflection(
+            existing?.reflection_text ?? ""
+          );
         }
       } catch (error) {
-        console.error("Journey initialization failed:", error);
+        console.error(
+          "Journey initialization failed:",
+          error
+        );
 
         if (isCurrent()) {
           setMessage(
-            "We could not load or save your reflection. Please try refreshing."
+            "We could not load your reflection. Please refresh and try again."
           );
         }
       } finally {
@@ -176,18 +253,27 @@ export default function JourneyReflection({
     const { data: authListener } =
       supabaseClient.auth.onAuthStateChange(
         (event, session) => {
-          // Do not make awaited Supabase calls inside
-          // this callback.
           if (event === "SIGNED_OUT") {
             requestVersion.current += 1;
             accountIdRef.current = null;
 
-            localStorage.removeItem(pendingKey);
-            localStorage.removeItem(legacyDraftKey);
-            localStorage.removeItem(legacyPendingKey);
+            localStorage.removeItem(
+              emailPendingKey
+            );
+            localStorage.removeItem(
+              legacyDraftKey
+            );
+            localStorage.removeItem(
+              legacyPendingKey
+            );
+            sessionStorage.removeItem(
+              googlePendingKey
+            );
 
             setUserId(null);
+            setUserEmail("");
             setReflection("");
+            setGoogleDraft(null);
             setEmail("");
             setShowSignIn(false);
             setMessage("");
@@ -198,16 +284,17 @@ export default function JourneyReflection({
             event === "SIGNED_IN" &&
             session?.user &&
             accountIdRef.current !== null &&
-            session.user.id !== accountIdRef.current
+            session.user.id !==
+              accountIdRef.current
           ) {
-            // Do not display an earlier account's text
-            // when the authenticated account changes.
             requestVersion.current += 1;
+            accountIdRef.current = null;
             setUserId(null);
+            setUserEmail("");
             setReflection("");
+            setGoogleDraft(null);
             setBusy(true);
 
-            // Reinitialize the component with a reload.
             window.location.reload();
           }
         }
@@ -218,13 +305,27 @@ export default function JourneyReflection({
       requestVersion.current += 1;
       authListener.subscription.unsubscribe();
     };
-    // Initialization is associated with this journey.
+    // This effect initializes the current journey.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [journeySlug, journeyTitle, pendingKey]);
+  }, [
+    journeySlug,
+    journeyTitle,
+    emailPendingKey,
+    googlePendingKey,
+  ]);
 
   async function handleSave() {
+    if (googleDraft) {
+      setMessage(
+        "Choose Restore draft or Discard draft before saving."
+      );
+      return;
+    }
+
     if (!reflection.trim()) {
-      setMessage("Write a reflection before saving.");
+      setMessage(
+        "Write a reflection before saving."
+      );
       return;
     }
 
@@ -238,67 +339,129 @@ export default function JourneyReflection({
     setBusy(true);
 
     try {
-      // Verify that the authenticated account has not
-      // changed since the reflection was loaded.
       const {
         data: { user },
-        error: authError,
+        error,
       } = await supabaseClient.auth.getUser();
 
       if (
-        authError ||
+        error ||
         !user ||
         user.id !== userId
       ) {
         setReflection("");
         setUserId(null);
-        setShowSignIn(false);
+        setUserEmail("");
         setMessage(
-          "Your account session changed. Please sign in again before saving."
+          "Your account session changed. Please sign in again."
         );
         return;
       }
 
-      await saveReflection(user.id, reflection);
+      await saveReflection(
+        user.id,
+        reflection
+      );
 
       setMessage(
         "Your reflection has been saved privately."
       );
     } catch (error) {
-      console.error("Journey save failed:", error);
+      console.error(
+        "Journey save failed:",
+        error
+      );
 
       setMessage(
-        "We could not save your reflection. Please try again."
+        "Saving failed. Please try again."
       );
     } finally {
       setBusy(false);
     }
   }
 
-  async function sendMagicLink() {
-    const targetEmail = normalizeEmail(email);
-
-    if (!targetEmail || !reflection.trim()) return;
+  async function handleGoogleSignIn() {
+    if (!reflection.trim()) {
+      setMessage(
+        "Write a reflection before continuing."
+      );
+      return;
+    }
 
     setBusy(true);
     setMessage("");
 
     try {
-      const pending: PendingDraft = {
+      const draft: GoogleDraft = {
+        text: reflection,
+        createdAt: Date.now(),
+      };
+
+      // A Google login must not accidentally
+      // trigger a previous email-draft save.
+      localStorage.removeItem(emailPendingKey);
+
+      sessionStorage.setItem(
+        googlePendingKey,
+        JSON.stringify(draft)
+      );
+
+      const returnPath =
+        `${window.location.pathname}` +
+        `${window.location.search}`;
+
+      await startGoogleSignIn(returnPath);
+    } catch (error) {
+      console.error(
+        "Google sign-in failed:",
+        error
+      );
+
+      sessionStorage.removeItem(
+        googlePendingKey
+      );
+
+      setMessage(
+        "Google sign-in could not start. You can try again or use email."
+      );
+      setBusy(false);
+    }
+  }
+
+  async function sendMagicLink() {
+    const targetEmail =
+      normalizeEmail(email);
+
+    if (
+      !targetEmail ||
+      !reflection.trim()
+    ) {
+      return;
+    }
+
+    setBusy(true);
+    setMessage("");
+
+    try {
+      const pending: EmailDraft = {
         text: reflection,
         email: targetEmail,
         createdAt: Date.now(),
       };
 
-      // If browser storage is unavailable, stop before
-      // sending the email rather than losing the draft.
+      // Do not mix Google and email drafts.
+      sessionStorage.removeItem(
+        googlePendingKey
+      );
+
       localStorage.setItem(
-        pendingKey,
+        emailPendingKey,
         JSON.stringify(pending)
       );
 
       const nextPath =
-        `${window.location.pathname}${window.location.search}`;
+        `${window.location.pathname}` +
+        `${window.location.search}`;
 
       const callbackUrl =
         `${window.location.origin}/auth/callback?next=` +
@@ -313,25 +476,55 @@ export default function JourneyReflection({
           },
         });
 
-      if (error) {
-        localStorage.removeItem(pendingKey);
-        throw error;
-      }
+      if (error) throw error;
 
       setShowSignIn(false);
-
       setMessage(
-        "Check your email. Open the sign-in link in this browser to return to your reflection."
+        "Check your email. Open the sign-in link in this browser."
       );
     } catch (error) {
-      console.error("Magic-link request failed:", error);
+      console.error(
+        "Magic-link request failed:",
+        error
+      );
+
+      localStorage.removeItem(
+        emailPendingKey
+      );
 
       setMessage(
-        "We could not prepare your sign-in link. Please try again."
+        "We could not send the link. Please try again."
       );
     } finally {
       setBusy(false);
     }
+  }
+
+  function restoreGoogleDraft() {
+    if (!googleDraft || !userId) return;
+
+    setReflection(googleDraft.text);
+    setGoogleDraft(null);
+
+    sessionStorage.removeItem(
+      googlePendingKey
+    );
+
+    setMessage(
+      "Draft restored. Review it, then click Save this reflection to save it to your account."
+    );
+  }
+
+  function discardGoogleDraft() {
+    setGoogleDraft(null);
+
+    sessionStorage.removeItem(
+      googlePendingKey
+    );
+
+    setMessage(
+      "Draft discarded. Your existing saved reflection remains unchanged."
+    );
   }
 
   return (
@@ -345,9 +538,58 @@ export default function JourneyReflection({
       </h2>
 
       <p className="mt-4 leading-8 text-[#23303D]/75">
-        Write freely. You only need to sign in when
-        you choose to save.
+        Write freely. You only need to
+        sign in when you choose to save.
       </p>
+
+      {googleDraft && userId && (
+        <div className="mt-6 rounded-2xl border border-[#C89B3C]/40 bg-[#FAF6F1] p-5">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#C89B3C]">
+            Review your draft
+          </p>
+
+          <h3 className="mt-3 text-xl font-semibold text-[#2C3E50]">
+            Confirm your account before saving
+          </h3>
+
+          <p className="mt-3 text-sm leading-7 text-[#23303D]/75">
+            You signed in as:
+          </p>
+
+          <p className="mt-1 break-all font-semibold text-[#2C3E50]">
+            {userEmail}
+          </p>
+
+          <p className="mt-4 text-sm leading-7 text-[#23303D]/75">
+            Your draft has not been saved to this
+            account yet. Restoring it will replace
+            the text currently shown in the editor.
+            You can review it before saving.
+          </p>
+
+          <div className="mt-4 whitespace-pre-wrap break-words rounded-xl border border-[#C89B3C]/20 bg-white p-4 text-sm leading-7 text-[#23303D]/80">
+            {googleDraft.text}
+          </div>
+
+          <div className="mt-5 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={restoreGoogleDraft}
+              className="rounded-full bg-[#2C3E50] px-5 py-3 text-sm font-semibold text-white"
+            >
+              Restore draft
+            </button>
+
+            <button
+              type="button"
+              onClick={discardGoogleDraft}
+              className="rounded-full border border-[#C89B3C]/40 px-5 py-3 text-sm font-semibold text-[#2C3E50]"
+            >
+              Discard draft
+            </button>
+          </div>
+        </div>
+      )}
 
       <textarea
         value={reflection}
@@ -356,7 +598,7 @@ export default function JourneyReflection({
           setMessage("");
         }}
         rows={7}
-        disabled={busy}
+        disabled={busy || Boolean(googleDraft)}
         placeholder="Lord, this is what I am walking through right now..."
         className="mt-6 w-full rounded-2xl border border-[#C89B3C]/25 bg-[#FAF6F1] p-4 leading-7 text-[#23303D] outline-none focus:border-[#C89B3C]"
       />
@@ -364,39 +606,52 @@ export default function JourneyReflection({
       <button
         type="button"
         onClick={handleSave}
-        disabled={busy}
-        className="mt-4 rounded-full bg-[#2C3E50] px-6 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+        disabled={busy || Boolean(googleDraft)}
+        className="mt-4 rounded-full bg-[#2C3E50] px-6 py-3 text-sm font-semibold text-white disabled:opacity-50"
       >
-        {busy ? "Please wait..." : "Save this reflection"}
+        {busy
+          ? "Please wait..."
+          : "Save this reflection"}
       </button>
 
       <p className="mt-3 text-sm leading-6 text-[#23303D]/65">
-        Saved reflections are private to your account.
-        Unsaved text is not stored permanently.
+        Saved reflections are private to your
+        account. You can read freely and choose
+        when something is worth saving.
       </p>
 
-      {!userId && (
-        <p className="mt-2 text-sm leading-6 text-[#23303D]/65">
-          No password needed. A private sign-in link
-          will be sent to your email.
-        </p>
-      )}
-
-      {showSignIn && !userId && (
+      {!userId && showSignIn && (
         <div className="mt-6 rounded-2xl border border-[#C89B3C]/25 bg-[#FAF6F1] p-5">
           <h3 className="text-xl font-semibold text-[#2C3E50]">
             Save your reflection
           </h3>
 
-          <p className="mt-3 text-sm leading-6 text-[#23303D]/70">
-            Your reflection will be temporarily kept
-            in this browser while you complete sign-in.
-            Use the same browser to open your email link.
+          <p className="mt-3 text-sm leading-7 text-[#23303D]/75">
+            Choose how you would like to sign in.
+            Your reflection will stay available
+            while you complete the process.
           </p>
+
+          <button
+            type="button"
+            onClick={handleGoogleSignIn}
+            disabled={busy}
+            className="mt-6 w-full rounded-full border border-[#C89B3C]/40 bg-white px-6 py-3 text-sm font-semibold text-[#2C3E50] transition hover:bg-[#FAF6F1] disabled:opacity-50"
+          >
+            Continue with Google
+          </button>
+
+          <div className="my-6 flex items-center gap-4">
+            <div className="h-px flex-1 bg-[#C89B3C]/20" />
+            <span className="text-xs text-[#23303D]/60">
+              or continue with email
+            </span>
+            <div className="h-px flex-1 bg-[#C89B3C]/20" />
+          </div>
 
           <label
             htmlFor="journey-email"
-            className="mt-4 block text-sm font-semibold text-[#2C3E50]"
+            className="block text-sm font-semibold text-[#2C3E50]"
           >
             Email address
           </label>
@@ -415,12 +670,18 @@ export default function JourneyReflection({
 
           <button
             type="button"
-            disabled={busy || !email.trim()}
             onClick={sendMagicLink}
-            className="mt-4 rounded-full bg-[#2C3E50] px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+            disabled={busy || !email.trim()}
+            className="mt-4 w-full rounded-full bg-[#2C3E50] px-5 py-3 text-sm font-semibold text-white disabled:opacity-50"
           >
             Send my sign-in link
           </button>
+
+          <p className="mt-4 text-xs leading-6 text-[#23303D]/60">
+            No password required. Email sign-in
+            works with Gmail, Outlook, Yahoo,
+            iCloud, and other email providers.
+          </p>
         </div>
       )}
 
